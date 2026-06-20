@@ -190,6 +190,7 @@ npx tsc --noEmit && npm run lint && npm run build
 | 2026-06-13 | #3 | Storige v2 | 세션 사전생성+externalPhotos(공유방 사진) 주입 개편(워크플로우 2트랙) — /session 개편+/reedit 신설+createEditSession, sessionId 임베드, complete→compose. 미들웨어 /api redirect 버그 수정(웹훅 차단 해소). build 클린 | ✅ | ~10m |
 | 2026-06-13 | #3 | 실키 스모크 | 실제 STORIGE_API_KEY로 §5 전구간 — 세션생성(200)→편집기 로드→공유방사진 4장 주입→캔버스 배치→편집완료→compose(200)→PDF다운로드→webhook 모사→pdfs버킷+pdf_ready. 전부 통과 | ✅ | ~15m |
 | 2026-06-15 | #4 | 템플릿+자동배치 | 210×210 4P 시드 SQL 작성 + 사진 자동배치(canvasData 주입) 구현. 실측 좌표계 기반 autoLayout.ts. 실키 검증: canvas_data 덤프 정확 + https 이미지 편집기 cover-fit 렌더 증명(dev http는 Mixed Content). build 클린 | ✅ | ~35m |
+| 2026-06-20 | #5 | 감사+정리 | 외부연동 전수 감사(integration-inventory) → 폴더 중첩 제거(단일 루트) → GitHub papascompany/sharesnap 연결(PRIVATE) → 운영품질 정리(로그아웃·/me·/photobooks·/orders·welcome토스트·보안헤더4종·photos RLS강화010·maskable아이콘·.well-known·문서정합). build 클린(20 routes), push 완료 | ✅ | ~50m |
 
 ---
 
