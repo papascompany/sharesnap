@@ -48,3 +48,9 @@ export const SHARE_CODE_LENGTH = 8;
 // 운영에서는 env STORIGE_TEMPLATE_SET_ID로 오버라이드 (getTemplateSetId() 참조)
 export const STORIGE_DEV_TEMPLATE_SET_ID =
   "a2cc2939-b76d-41a2-bd41-2d9fba091a24";
+
+// 자동배치 기본 페이지 판형 (mm) — Storige 포토북 자동편집 시 워크스페이스 크기 산출에 사용.
+// 정사각 210×210 기본. 운영에서는 env STORIGE_PHOTOBOOK_PAGE_W_MM / _H_MM 로 오버라이드.
+// (env 값은 route 단에서 parse 후 buildAutoLayoutCanvasData에 주입)
+export const STORIGE_PHOTOBOOK_PAGE_W_MM = 210;
+export const STORIGE_PHOTOBOOK_PAGE_H_MM = 210;

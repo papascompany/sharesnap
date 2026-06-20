@@ -105,6 +105,15 @@
 - **오너 결정**: 판형(정사각 210/A4) · 페이지 범위(pageCountRange) · 책등/날개 · 면지/표지편집 · 자동배치 방식
 - **미해결**: ShareSnap 상수 a2cc2939…(운영 API에 실재 확인됨, 세션생성 성공)와 Storige 시드 ID sample-8x8-book-24p 불일치 — dev 샘플 환경별 차이로 추정
 
+### ADR-011-v4 (2026-06-15): 210×210 4P 템플릿 시드 + 사진 자동배치 구현·검증 완료
+- **결정 반영**: 판형 210×210 기본(추가는 Admin) · 페이지 4P 단위 · 자동배치 후 수동편집
+- **템플릿 등록**: 등록 API는 X-API-Key 401(Admin JWT 전용) → SQL 시드만 가능. `docs/storige-seed-210x210-photobook.sql`(표지 spread 'photobook-spread-cover-210' + 내지 page 'photobook-page-210' + 셋 'photobook-210-book-4p', idempotent ON DUPLICATE KEY). 적용은 Storige 운영자 — 적용 후 ShareSnap `STORIGE_TEMPLATE_SET_ID=photobook-210-book-4p` 설정. 가이드 부록 B 참조
+- **자동배치 = ShareSnap canvasData 주입** (Storige 편집기 수정 0): create-edit-session.dto의 canvasData?:any에 페이지 배열 주입. `src/modules/photobook/services/autoLayout.ts` — buildAutoLayoutCanvasData(photos, {pageWidthMm,pageHeightMm,pageStep=4}) → [null(표지 템플릿유지), 내지별 [workspace rect, image]...]. 내지 수=사진수 4배수 올림
+- **좌표계 ground truth (실측 세션 덤프)**: 단위 px, 워크스페이스 중심원점, originX/Y=center, Fabric 5.5.2. 워크스페이스 px=(판형mm+블리드3×2)×150/25.4. 이미지 원본px+cover-fit scale=max(Wpx/iw,Hpx/ih), left=0/top=0, crossOrigin:'anonymous', externalPhotoUrl, selectable:true(수동편집 가능)
+- **실키 검증**: order_no=2 세션(40a15335) canvas_data 덤프 = [null,4×[workspace,image]] 좌표/스케일(1.491) 정확. https 공개이미지 테스트 세션은 편집기에 cover-fit 정상 렌더 ✅ → 자동배치 로직 100% 정확 증명
+- **⚠ dev 한계 = Mixed Content**: 자동배치 이미지 src가 http://127.0.0.1(로컬 Supabase) → HTTPS 편집기(editor.papascompany.co.kr) iframe이 차단해 dev 앱에선 사진 미렌더. **프로덕션 https Supabase URL에선 자동 해결**(§7 Supabase Storage CORS는 ACAO * 확인됨). 로컬 풀검증하려면 Supabase를 https 터널로 노출 필요
+- **확인**: Storige Admin에 'ShareSnap' 사이트 이미 등록됨(JWT siteName=ShareSnap, siteId 9a5d4e0c…). 키도 ShareSnap 전용
+
 | [버그] 미들웨어가 /api/* 비로그인 요청을 /login(307)으로 redirect → 웹훅 차단 + fetch가 HTML 받음 | updateSession isPublicRoute에 `pathname.startsWith("/api")` 추가 — API는 자체 401 JSON/서명검증. session→503, webhook→401(서명) 정상 확인 | 2026-06-13 |
 
 ### ADR-010: 디자인 시스템 — "추억을 모아 빛나게"

@@ -33,6 +33,9 @@ export function buildExternalPhotos(photos: Photo[]): ExternalPhoto[] {
       url,
       name: photo.original_filename ?? `photo-${photo.id}.jpg`,
       ...(photo.thumbnailUrl ? { thumbnailUrl: photo.thumbnailUrl } : {}),
+      // 원본 px — 자동배치 cover-fit scale 계산용 (null이면 생략 → 정사각 폴백)
+      ...(photo.width != null ? { width: photo.width } : {}),
+      ...(photo.height != null ? { height: photo.height } : {}),
     });
   }
 

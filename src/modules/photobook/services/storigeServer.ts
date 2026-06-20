@@ -141,6 +141,12 @@ export interface CreateEditSessionParams {
   callbackUrl?: string;
   /** 공유방 사진 주입 — 편집기 좌측 "공유방 사진" 탭에 노출됨 */
   externalPhotos: ExternalPhoto[];
+  /**
+   * 자동배치 canvasData — 페이지별 Fabric JSON 배열 [표지, 내지1, ...].
+   * buildAutoLayoutCanvasData() 산출물. 지정 시에만 body에 포함(있을 때만).
+   * (index 0 = null이면 표지 템플릿 유지)
+   */
+  canvasData?: unknown[];
 }
 
 /**
@@ -165,6 +171,8 @@ export async function createEditSession(
       templateSetId: params.templateSetId,
       orderSeqno: params.orderSeqno,
       ...(params.callbackUrl !== undefined && { callbackUrl: params.callbackUrl }),
+      // 자동배치 canvasData는 지정됐을 때만 주입 (기존 시그니처 호환)
+      ...(params.canvasData !== undefined && { canvasData: params.canvasData }),
       metadata: { externalPhotos: params.externalPhotos },
     }),
     cache: "no-store",

@@ -44,6 +44,13 @@ export interface ExternalPhoto {
   uploaderName?: string;
   /** 업로드/촬영 시각 ISO 문자열 (taken_at ?? created_at, 선택) */
   uploadedAt?: string;
+  /**
+   * 원본 사진 가로 px (photos.width) — 자동배치 cover-fit scale 계산용 (선택).
+   * 없으면 자동배치는 정사각 폴백으로 처리한다.
+   */
+  width?: number;
+  /** 원본 사진 세로 px (photos.height) — 자동배치 cover-fit scale 계산용 (선택). */
+  height?: number;
 }
 
 // ===== 이미지 처리 =====

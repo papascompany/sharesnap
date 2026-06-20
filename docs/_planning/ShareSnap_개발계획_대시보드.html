@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShareSnap — 개발 계획 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a26;
+  --surface3: #222233;
+  --border: #2a2a3d;
+  --text: #e8e6e3;
+  --text2: #9d9baf;
+  --text3: #6b6980;
+  --accent: #7c6cf0;
+  --accent2: #a78bfa;
+  --coral: #f97066;
+  --teal: #2dd4a8;
+  --amber: #f5a623;
+  --blue: #60a5fa;
+  --pink: #f472b6;
+  --green: #4ade80;
+  --card-radius: 16px;
+  --section-gap: 80px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+/* ── Hero ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(124,108,240,0.15) 0%, transparent 70%);
+  top: -100px; left: 50%; transform: translateX(-50%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 13px;
+  color: var(--accent2);
+  margin-bottom: 32px;
+  backdrop-filter: blur(10px);
+  animation: fadeUp 0.6s ease both;
+}
+.hero h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(48px, 8vw, 96px);
+  font-weight: 900;
+  letter-spacing: -2px;
+  line-height: 1.05;
+  margin-bottom: 24px;
+  animation: fadeUp 0.6s ease 0.1s both;
+}
+.hero h1 span { color: var(--accent); }
+.hero p {
+  font-size: 18px;
+  color: var(--text2);
+  max-width: 640px;
+  margin-bottom: 40px;
+  animation: fadeUp 0.6s ease 0.2s both;
+}
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.6s ease 0.3s both;
+}
+.hero-stat { text-align: center; }
+.hero-stat .num {
+  font-family: 'Playfair Display', serif;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.hero-stat .label { font-size: 13px; color: var(--text3); margin-top: 4px; }
+
+/* ── Sections ── */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+section { padding: var(--section-gap) 0; }
+.section-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.section-title {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -1px;
+}
+.section-desc {
+  font-size: 16px;
+  color: var(--text2);
+  max-width: 640px;
+  margin-bottom: 48px;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 32px;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* ── User Flow ── */
+.flow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.flow-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.flow-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+.flow-card .step-num {
+  position: absolute;
+  top: 16px; right: 20px;
+  font-family: 'Playfair Display', serif;
+  font-size: 64px;
+  font-weight: 900;
+  color: var(--surface3);
+  line-height: 1;
+}
+.flow-card .icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+.flow-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.flow-card p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+/* ── Tech Stack ── */
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+.stack-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 28px;
+}
+.stack-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.stack-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.stack-item:last-child { border-bottom: none; }
+.stack-item .name { color: var(--text); font-weight: 500; }
+.stack-item .tech {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent2);
+  background: rgba(124,108,240,0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+/* ── Module Architecture ── */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.module-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+}
+.module-card:hover { border-color: var(--accent); transform: scale(1.02); }
+.module-card.core { border-left: 3px solid var(--coral); }
+.module-card.feature { border-left: 3px solid var(--teal); }
+.module-card.order { border-left: 3px solid var(--amber); }
+.module-card.infra { border-left: 3px solid var(--blue); }
+.module-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.module-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.module-card p { font-size: 12px; color: var(--text3); }
+.module-files {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text3);
+  font-family: 'JetBrains Mono', monospace;
+  display: none;
+}
+.module-card.expanded .module-files { display: block; }
+.module-card .badge {
+  position: absolute;
+  top: 12px; right: 12px;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-weight: 700;
+}
+
+/* ── DB Schema ── */
+.schema-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.table-card .header {
+  padding: 14px 20px;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.table-card .columns {
+  padding: 12px 20px;
+}
+.col-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.col-row .col-name { color: var(--text); flex: 1; }
+.col-row .col-type { color: var(--text3); font-size: 11px; }
+.col-row .pk {
+  background: var(--amber);
+  color: #000;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+.col-row .fk {
+  background: var(--blue);
+  color: #000;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+/* ── Phase Timeline ── */
+.timeline { position: relative; }
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 24px; top: 0; bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--accent), var(--teal), var(--amber), var(--coral));
+  border-radius: 2px;
+}
+.phase-item {
+  position: relative;
+  padding-left: 64px;
+  margin-bottom: 40px;
+}
+.phase-dot {
+  position: absolute;
+  left: 16px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  top: 4px;
+}
+.phase-item .phase-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.phase-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+.phase-item h3 { font-size: 20px; font-weight: 700; }
+.phase-item .duration {
+  font-size: 12px;
+  color: var(--text3);
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+.phase-item .desc { font-size: 14px; color: var(--text2); margin-bottom: 12px; }
+.task-list { list-style: none; }
+.task-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: var(--text2);
+}
+.task-list li::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text3);
+  flex-shrink: 0;
+}
+.deliverables {
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.deliverables strong { color: var(--teal); }
+
+/* ── API Table ── */
+.api-section { margin-bottom: 32px; }
+.api-section h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.api-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(42,42,61,0.5);
+  align-items: center;
+}
+.api-method {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-align: center;
+}
+.api-method.get { background: rgba(96,165,250,0.15); color: var(--blue); }
+.api-method.post { background: rgba(74,222,128,0.15); color: var(--green); }
+.api-method.put { background: rgba(245,166,35,0.15); color: var(--amber); }
+.api-method.delete { background: rgba(249,112,102,0.15); color: var(--coral); }
+.api-path {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+.api-desc { color: var(--text3); font-size: 12px; }
+
+/* ── Agent Orchestration ── */
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.agent-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+.agent-card .agent-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 12px;
+}
+.agent-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.agent-card p { font-size: 11px; color: var(--text3); }
+
+/* ── Pipeline Flow ── */
+.pipeline {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 32px;
+  overflow-x: auto;
+}
+.pipeline-phase {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.pipe-node {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pipe-arrow {
+  color: var(--text3);
+  font-size: 16px;
+}
+.pipe-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text3);
+  min-width: 80px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Book Spec ── */
+.spec-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.spec-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 28px;
+  text-align: center;
+}
+.spec-card .size-icon {
+  width: 80px;
+  height: 100px;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent2);
+}
+.spec-card .size-icon.square { width: 90px; height: 90px; }
+.spec-card .size-icon.small { width: 66px; height: 90px; }
+.spec-card h4 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.spec-card .mm { font-size: 13px; color: var(--text3); margin-bottom: 12px; }
+.spec-card .px {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--teal);
+  background: rgba(45,212,168,0.1);
+  padding: 4px 12px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* ── Kakao Integration ── */
+.kakao-flow {
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr;
+  gap: 0;
+  align-items: stretch;
+}
+.kakao-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 24px;
+}
+.kakao-col h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kakao-col ul {
+  list-style: none;
+  font-size: 13px;
+  color: var(--text2);
+}
+.kakao-col ul li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kakao-col ul li:last-child { border-bottom: none; }
+.kakao-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text3);
+  font-size: 20px;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+.status-badge.ok { background: rgba(74,222,128,0.15); color: var(--green); }
+.status-badge.partial { background: rgba(245,166,35,0.15); color: var(--amber); }
+.status-badge.no { background: rgba(249,112,102,0.15); color: var(--coral); }
+
+/* ── Session Document System ── */
+.doc-system {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+.doc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 24px;
+}
+.doc-card h4 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.doc-card .doc-purpose {
+  font-size: 13px;
+  color: var(--accent2);
+  margin-bottom: 12px;
+}
+.doc-card ul {
+  list-style: none;
+  font-size: 13px;
+  color: var(--text2);
+}
+.doc-card ul li { padding: 4px 0; }
+.doc-card ul li::before { content: '→ '; color: var(--text3); }
+
+/* ── Risk Table ── */
+.risk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.risk-table th {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 2px solid var(--border);
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.risk-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.risk-high { color: var(--coral); font-weight: 700; }
+.risk-mid { color: var(--amber); font-weight: 700; }
+
+/* ── Footer ── */
+footer {
+  text-align: center;
+  padding: 60px 24px;
+  border-top: 1px solid var(--border);
+  color: var(--text3);
+  font-size: 13px;
+}
+
+/* ── Navigation ── */
+.nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+  padding: 16px 24px;
+  backdrop-filter: blur(20px);
+  background: rgba(10,10,15,0.8);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  overflow-x: auto;
+}
+.nav-logo {
+  font-weight: 900;
+  font-size: 16px;
+  white-space: nowrap;
+  color: var(--accent);
+}
+.nav a {
+  font-size: 12px;
+  color: var(--text3);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+.nav a:hover { color: var(--text); }
+
+/* ── Page Layout ── */
+.page-layout-demo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--card-radius);
+  padding: 32px;
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.page-mock {
+  width: 180px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  overflow: hidden;
+}
+.page-mock .photo-area {
+  height: 140px;
+  background: linear-gradient(135deg, #ddd, #bbb);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #999;
+}
+.page-mock .comment-area {
+  padding: 12px;
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  border-top: 1px solid #eee;
+  min-height: 48px;
+}
+.page-mock .page-num {
+  text-align: center;
+  padding: 4px;
+  font-size: 9px;
+  color: #aaa;
+}
+.page-label {
+  font-size: 12px;
+  color: var(--text3);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeUp 0.5s ease both; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .spec-cards { grid-template-columns: 1fr; }
+  .kakao-flow { grid-template-columns: 1fr; }
+  .kakao-mid { flex-direction: row; padding: 12px 0; }
+  .doc-system { grid-template-columns: 1fr; }
+  .api-row { grid-template-columns: 60px 1fr; }
+  .api-desc { grid-column: 1 / -1; }
+  .module-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+  .hero-stats { gap: 24px; }
+  .nav { gap: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <div class="nav-logo">📸 ShareSnap</div>
+  <a href="#overview">개요</a>
+  <a href="#flow">사용자 흐름</a>
+  <a href="#tech">기술 스택</a>
+  <a href="#modules">모듈</a>
+  <a href="#database">데이터베이스</a>
+  <a href="#book-spec">포토북 스펙</a>
+  <a href="#phases">개발 Phase</a>
+  <a href="#api">API</a>
+  <a href="#kakao">카카오 연동</a>
+  <a href="#agents">에이전트</a>
+  <a href="#docs">문서 체계</a>
+  <a href="#risks">리스크</a>
+</nav>
+
+<!-- Hero -->
+<header class="hero" id="overview">
+  <div class="hero-badge">🚀 Development Specification v1.0</div>
+  <h1>Share<span>Snap</span></h1>
+  <p>여행·모임 참여자들이 사진을 공유하고, 자동편집 포토북을 만들어 주문까지 연결하는 End-to-End 사진 공유 플랫폼</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">10</div><div class="label">모듈 (M0~M9)</div></div>
+    <div class="hero-stat"><div class="num">7</div><div class="label">개발 Phase</div></div>
+    <div class="hero-stat"><div class="num">9</div><div class="label">DB 테이블</div></div>
+    <div class="hero-stat"><div class="num">30+</div><div class="label">API 엔드포인트</div></div>
+    <div class="hero-stat"><div class="num">4~5</div><div class="label">주 (예상 기간)</div></div>
+  </div>
+</header>
+
+<!-- User Flow -->
+<section id="flow">
+  <div class="container">
+    <div class="section-label">User Flow</div>
+    <div class="section-title">핵심 사용자 흐름</div>
+    <div class="section-desc">모임장이 공유방을 만들고, 참여자들이 사진을 공유하고, 포토북을 만들어 주문하기까지의 전체 여정</div>
+    <div class="flow-grid">
+      <div class="flow-card">
+        <div class="step-num">01</div>
+        <div class="icon" style="background:rgba(124,108,240,0.15);color:var(--accent)">🏠</div>
+        <h3>공유방 개설</h3>
+        <p>모임장이 여행/모임명으로 공유방을 만들고, 카카오톡으로 초대 링크를 공유합니다.</p>
+      </div>
+      <div class="flow-card">
+        <div class="step-num">02</div>
+        <div class="icon" style="background:rgba(96,165,250,0.15);color:var(--blue)">🔗</div>
+        <h3>카카오 로그인 참여</h3>
+        <p>초대 링크 클릭 → 카카오 로그인(원클릭) → 공유방 자동 입장. 별도 회원가입 없이 바로 시작합니다.</p>
+      </div>
+      <div class="flow-card">
+        <div class="step-num">03</div>
+        <div class="icon" style="background:rgba(45,212,168,0.15);color:var(--teal)">📸</div>
+        <h3>사진 업로드 & 채팅</h3>
+        <p>여행 중 PWA 앱에서 사진 촬영/업로드. 실시간 채팅으로 코멘트를 남기며 추억을 공유합니다.</p>
+      </div>
+      <div class="flow-card">
+        <div class="step-num">04</div>
+        <div class="icon" style="background:rgba(245,166,35,0.15);color:var(--amber)">🖼️</div>
+        <h3>갤러리에서 모아보기</h3>
+        <p>모인 사진을 타임라인/그리드 뷰로 감상. 포토북에 넣을 사진을 선택합니다.</p>
+      </div>
+      <div class="flow-card">
+        <div class="step-num">05</div>
+        <div class="icon" style="background:rgba(244,114,182,0.15);color:var(--pink)">✨</div>
+        <h3>포토북 자동편집</h3>
+        <p>선택한 사진+코멘트를 1페이지 1사진으로 자동 배치. Fabric.js 편집기로 표지/내지를 커스텀합니다.</p>
+      </div>
+      <div class="flow-card">
+        <div class="step-num">06</div>
+        <div class="icon" style="background:rgba(249,112,102,0.15);color:var(--coral)">📦</div>
+        <h3>PDF 생성 & 주문</h3>
+        <p>300dpi 고해상도 PDF를 생성하고, 미리보기 후 포토북/사진 인화를 주문합니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tech Stack -->
+<section id="tech" style="background:var(--surface)">
+  <div class="container">
+    <div class="section-label">Tech Stack</div>
+    <div class="section-title">기술 스택</div>
+    <div class="section-desc">모던 웹 기술 기반의 풀스택 아키텍처. PWA로 네이티브 앱에 가까운 모바일 경험을 제공합니다.</div>
+    <div class="stack-grid">
+      <div class="stack-card">
+        <h3><span style="color:var(--blue)">◆</span> Frontend</h3>
+        <div class="stack-item"><span class="name">프레임워크</span><span class="tech">Next.js 14 (App Router)</span></div>
+        <div class="stack-item"><span class="name">언어</span><span class="tech">TypeScript</span></div>
+        <div class="stack-item"><span class="name">스타일링</span><span class="tech">Tailwind CSS + shadcn/ui</span></div>
+        <div class="stack-item"><span class="name">캔버스 편집기</span><span class="tech">Fabric.js 6.x</span></div>
+        <div class="stack-item"><span class="name">상태 관리</span><span class="tech">Zustand</span></div>
+        <div class="stack-item"><span class="name">실시간</span><span class="tech">Supabase Realtime</span></div>
+        <div class="stack-item"><span class="name">모바일</span><span class="tech">PWA (반응형)</span></div>
+      </div>
+      <div class="stack-card">
+        <h3><span style="color:var(--teal)">◆</span> Backend</h3>
+        <div class="stack-item"><span class="name">런타임</span><span class="tech">Next.js API Routes</span></div>
+        <div class="stack-item"><span class="name">데이터베이스</span><span class="tech">Supabase (PostgreSQL)</span></div>
+        <div class="stack-item"><span class="name">인증</span><span class="tech">Supabase Auth (카카오 OAuth)</span></div>
+        <div class="stack-item"><span class="name">스토리지</span><span class="tech">Supabase Storage (S3)</span></div>
+        <div class="stack-item"><span class="name">PDF 생성</span><span class="tech">Puppeteer (서버사이드)</span></div>
+        <div class="stack-item"><span class="name">이미지 처리</span><span class="tech">Sharp (Node.js)</span></div>
+      </div>
+      <div class="stack-card">
+        <h3><span style="color:var(--amber)">◆</span> Infrastructure</h3>
+        <div class="stack-item"><span class="name">호스팅</span><span class="tech">Vercel</span></div>
+        <div class="stack-item"><span class="name">BaaS</span><span class="tech">Supabase</span></div>
+        <div class="stack-item"><span class="name">CDN</span><span class="tech">Vercel Edge Network</span></div>
+        <div class="stack-item"><span class="name">미디어</span><span class="tech">Supabase Storage + CDN</span></div>
+        <div class="stack-item"><span class="name">모니터링</span><span class="tech">Vercel Analytics + Sentry</span></div>
+        <div class="stack-item"><span class="name">CI/CD</span><span class="tech">Vercel Git Deploy</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Module Architecture -->
+<section id="modules">
+  <div class="container">
+    <div class="section-label">Module Architecture</div>
+    <div class="section-title">모듈 아키텍처 (10개 모듈)</div>
+    <div class="section-desc">기능별 독립 모듈화. 각 모듈은 components, hooks, services, types 구조를 따르며 재활용성을 극대화합니다.</div>
+    <div style="display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap">
+      <span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:12px;height:12px;background:var(--blue);border-radius:3px;display:inline-block"></span> 인프라</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:12px;height:12px;background:var(--coral);border-radius:3px;display:inline-block"></span> 핵심 기능</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:12px;height:12px;background:var(--teal);border-radius:3px;display:inline-block"></span> 편집/생성</span>
+      <span style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:12px;height:12px;background:var(--amber);border-radius:3px;display:inline-block"></span> 주문/관리</span>
+    </div>
+    <div class="module-grid">
+      <div class="module-card infra" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M0</div>
+        <h4>Shared (공용)</h4>
+        <p>Layout, 타입, 유틸, Supabase 클라이언트</p>
+        <div class="module-files">components/ hooks/ lib/ types/</div>
+      </div>
+      <div class="module-card infra" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M1</div>
+        <h4>Auth (인증)</h4>
+        <p>카카오 로그인, Magic Link, AuthGuard</p>
+        <div class="module-files">LoginPage KakaoLoginButton AuthGuard authService</div>
+      </div>
+      <div class="module-card core" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M2</div>
+        <h4>Room (공유방)</h4>
+        <p>방 생성/참여, 초대 링크, 멤버 관리</p>
+        <div class="module-files">RoomCreate RoomList InviteLink JoinRoom roomService</div>
+      </div>
+      <div class="module-card core" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M3</div>
+        <h4>Chat (채팅)</h4>
+        <p>실시간 메시지, Presence, 사진 메시지</p>
+        <div class="module-files">ChatRoom MessageList MessageInput useRealtime chatService</div>
+      </div>
+      <div class="module-card core" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M4</div>
+        <h4>Photo (사진)</h4>
+        <p>업로드, 갤러리, 코멘트, 선택</p>
+        <div class="module-files">PhotoUploader PhotoGallery PhotoViewer uploadService imageProcessor</div>
+      </div>
+      <div class="module-card feature" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M5 ⭐</div>
+        <h4>Editor (편집기)</h4>
+        <p>Fabric.js 캔버스, 표지/내지 편집</p>
+        <span class="badge" style="background:rgba(249,112,102,0.15);color:var(--coral)">핵심</span>
+        <div class="module-files">FabricCanvas CoverEditor PageEditor TextTool ImageTool FontPicker MobileToolbar useFabricCanvas useCanvasHistory dpiConverter</div>
+      </div>
+      <div class="module-card feature" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M6</div>
+        <h4>Photobook (포토북)</h4>
+        <p>생성 위저드, 자동편집, 미리보기</p>
+        <div class="module-files">BookCreator PhotoSelector BookPreview SizeSelector autoLayoutEngine</div>
+      </div>
+      <div class="module-card order" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M7</div>
+        <h4>Print Order (인화)</h4>
+        <p>사진 인화 주문, 사이즈/수량</p>
+        <div class="module-files">PrintOrderForm SizeSelector OrderSummary printOrderService</div>
+      </div>
+      <div class="module-card feature" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M8</div>
+        <h4>PDF (생성)</h4>
+        <p>300dpi PDF, 폰트 임베드, 병합</p>
+        <div class="module-files">photobookPdf coverRenderer pageRenderer pdfMerger fontEmbed</div>
+      </div>
+      <div class="module-card order" onclick="this.classList.toggle('expanded')">
+        <div class="module-id">M9</div>
+        <h4>Admin (관리자)</h4>
+        <p>리소스 관리, 주문 대시보드</p>
+        <div class="module-files">ResourceManager FontUploader ClipartManager OrderDashboard</div>
+      </div>
+    </div>
+
+    <!-- Module Dependencies -->
+    <div class="card" style="margin-top:32px;overflow-x:auto">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">모듈 의존성 (개발 순서)</h4>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-family:'JetBrains Mono',monospace">
+        <span style="background:rgba(96,165,250,0.15);color:var(--blue);padding:6px 14px;border-radius:8px">M0</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(96,165,250,0.15);color:var(--blue);padding:6px 14px;border-radius:8px">M1</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(249,112,102,0.15);color:var(--coral);padding:6px 14px;border-radius:8px">M2</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(249,112,102,0.15);color:var(--coral);padding:6px 14px;border-radius:8px">M3</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(249,112,102,0.15);color:var(--coral);padding:6px 14px;border-radius:8px">M4</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(45,212,168,0.15);color:var(--teal);padding:6px 14px;border-radius:8px;border:1px solid var(--teal)">M5 ⭐</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(45,212,168,0.15);color:var(--teal);padding:6px 14px;border-radius:8px">M6+M8</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(245,166,35,0.15);color:var(--amber);padding:6px 14px;border-radius:8px">M7+M9</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Database Schema -->
+<section id="database" style="background:var(--surface)">
+  <div class="container">
+    <div class="section-label">Database</div>
+    <div class="section-title">데이터베이스 스키마 (9개 테이블)</div>
+    <div class="section-desc">Supabase PostgreSQL 기반. RLS(Row Level Security)로 방 멤버만 데이터에 접근할 수 있도록 보안을 적용합니다.</div>
+    <div class="schema-grid">
+      <div class="table-card">
+        <div class="header" style="background:rgba(124,108,240,0.08)">📂 rooms</div>
+        <div class="columns">
+          <div class="col-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+          <div class="col-row"><span class="col-name">name</span><span class="col-type">TEXT</span></div>
+          <div class="col-row"><span class="col-name">share_code</span><span class="col-type">VARCHAR(8) UNIQUE</span></div>
+          <div class="col-row"><span class="col-name">event_start/end_date</span><span class="col-type">TIMESTAMPTZ</span></div>
+          <div class="col-row"><span class="fk">FK</span><span class="col-name">created_by</span><span class="col-type">→ auth.users</span></div>
+          <div class="col-row"><span class="col-name">is_active, max_members</span><span class="col-type">BOOL, INT</span></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="header" style="background:rgba(96,165,250,0.08)">👥 room_members</div>
+        <div class="columns">
+          <div class="col-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+          <div class="col-row"><span class="fk">FK</span><span class="col-name">room_id</span><span class="col-type">→ rooms</span></div>
+          <div class="col-row"><span class="fk">FK</span><span class="col-name">user_id</span><span class="col-type">→ auth.users</span></div>
+          <div class="col-row"><span class="col-name">nickname</span><span class="col-type">TEXT</span></div>
+          <div class="col-row"><span class="col-name">role</span><span class="col-type">owner|admin|member</span></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="header" style="background:rgba(45,212,168,0.08)">💬 messages</div>
+        <div class="columns">
+          <div class="col-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+          <div class="col-row"><span class="fk">FK</span><span class="col-name">room_id, user_id</span><span class="col-type">→ rooms, users</span></div>
+          <div class="col-row"><span class="col-name">content</span><span class="col-type">TEXT</span></div>
+          <div class="col-row"><span class="col-name">message_type</span><span class="col-type">text|photo|system</span></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="header" style="background:rgba(244,114,182,0.08)">📷 photos</div>
+        <div class="columns">
+          <div class="col-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+          <div class="col-row"><span class="fk">FK</span><span class="col-name">room_id, message_id, uploaded_by</span><span class="col-type">→ FK</span></div>
+          <div class="col-row"><span class="col-name">original/thumbnail/medium_url</span><span class="col-type">TEXT</span></div>
+          <div class="col-row"><span class="col-name">width, height, file_size</span><span class="col-type">INT, BIGINT</span></div>
+          <div class="col-row"><span class="col-name">exif_data</span><span class="col-type">JSONB</span></div>
+          <div class="col-row"><span class="col-name">is_selected_for_book</span><span class="col-type">BOOLEAN</span></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="header" style="background:rgba(245,166,35,0.08)">📖 photobook_orders</div>
+        <div class="columns">
+          <div class="col-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+          <div class="col-row"><span class="col-name">book_size</span><span class="col-type">A4|A5|210x210</span></div>
+          <div class="col-row"><span class="col-name">status</span><span class="col-type">draft→...→delivered</span></div>
+          <div class="col-row"><span class="col-name">cover_data / back_cover_data</span><span class="col-type">JSONB (Fabric.js)</span></div>
+          <div class="col-row"><span class="col-name">pdf_url, total_price</span><span class="col-type">TEXT, DECIMAL</span></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="header" style="background:rgba(249,112,102,0.08)">📄 photobook_pages</div>
+        <div class="columns">
+          <div class="col-row"><span class="pk">PK</span><span class="col-name">id</span><span class="col-type">UUID</span></div>
+          <div class="col-row"><span class="fk">FK</span><span class="col-name">order_id, photo_id</span><span class="col-type">→ FK</span></div>
+          <div class="col-row"><span class="col-name">page_number</span><span class="col-type">INTEGER</span></div>
+          <div class="col-row"><span class="col-name">comment_text</span><span class="col-type">TEXT</span></div>
+          <div class="col-row"><span class="col-name">layout_data</span><span class="col-type">JSONB (Fabric.js)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Book Specifications -->
+<section id="book-spec">
+  <div class="container">
+    <div class="section-label">Photobook Spec</div>
+    <div class="section-title">포토북 사이즈 & PDF 스펙</div>
+    <div class="section-desc">3가지 사이즈 옵션. 모든 출력물은 300dpi 인쇄 품질을 보장합니다.</div>
+    <div class="spec-cards">
+      <div class="spec-card">
+        <div class="size-icon">A4</div>
+        <h4>A4</h4>
+        <div class="mm">210 × 297 mm</div>
+        <div class="px">2480 × 3508 px</div>
+        <p style="margin-top:12px;font-size:12px;color:var(--text3)">대형 포토북</p>
+      </div>
+      <div class="spec-card">
+        <div class="size-icon small">A5</div>
+        <h4>A5</h4>
+        <div class="mm">148 × 210 mm</div>
+        <div class="px">1748 × 2480 px</div>
+        <p style="margin-top:12px;font-size:12px;color:var(--text3)">일반 포토북</p>
+      </div>
+      <div class="spec-card">
+        <div class="size-icon square">正方形</div>
+        <h4>210×210</h4>
+        <div class="mm">210 × 210 mm</div>
+        <div class="px">2480 × 2480 px</div>
+        <p style="margin-top:12px;font-size:12px;color:var(--text3)">정사각 포토북</p>
+      </div>
+    </div>
+
+    <!-- PDF Spec -->
+    <div class="card" style="margin-top:32px">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">PDF 생성 요건</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;font-size:13px">
+        <div><span style="color:var(--text3)">해상도</span><br><strong>300dpi</strong> (인쇄 품질)</div>
+        <div><span style="color:var(--text3)">색상모드</span><br><strong>CMYK</strong> (인쇄) / sRGB (미리보기)</div>
+        <div><span style="color:var(--text3)">블리드</span><br><strong>3mm</strong> (각 면)</div>
+        <div><span style="color:var(--text3)">안전영역</span><br>내부 <strong>5mm</strong></div>
+        <div><span style="color:var(--text3)">폰트</span><br>모든 폰트 <strong>임베드</strong> (서브셋)</div>
+        <div><span style="color:var(--text3)">이미지 압축</span><br>JPEG <strong>Quality 95%</strong></div>
+        <div><span style="color:var(--text3)">PDF 버전</span><br><strong>PDF/X-4</strong> (인쇄 호환)</div>
+        <div><span style="color:var(--text3)">페이지 구성</span><br>[앞표지] + [내지 N장] + [뒷표지]</div>
+      </div>
+    </div>
+
+    <!-- Page Layout Demo -->
+    <div style="margin-top:32px">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">내지 기본 레이아웃 (1페이지 1사진)</h4>
+      <div class="page-layout-demo">
+        <div>
+          <div class="page-mock" style="background:linear-gradient(135deg,var(--accent),var(--pink));border-color:var(--accent)">
+            <div style="height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700">앞표지</div>
+          </div>
+          <div class="page-label">표지 (커스텀)</div>
+        </div>
+        <div style="font-size:24px;color:var(--text3)">→</div>
+        <div>
+          <div class="page-mock">
+            <div class="photo-area">📷</div>
+            <div class="comment-area">"가족과 함께한 아름다운 순간"</div>
+            <div class="page-num">1</div>
+          </div>
+          <div class="page-label">내지 (자동편집)</div>
+        </div>
+        <div style="font-size:24px;color:var(--text3)">→</div>
+        <div>
+          <div class="page-mock">
+            <div class="photo-area">📷</div>
+            <div class="comment-area">"석양이 지는 해변에서"</div>
+            <div class="page-num">2</div>
+          </div>
+          <div class="page-label">내지 (커스텀 가능)</div>
+        </div>
+        <div style="font-size:24px;color:var(--text3)">→</div>
+        <div>
+          <div class="page-mock" style="background:linear-gradient(135deg,var(--surface3),var(--surface2));border-color:var(--border)">
+            <div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:14px;font-weight:700">뒷표지</div>
+          </div>
+          <div class="page-label">뒷표지 (커스텀)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Development Phases -->
+<section id="phases" style="background:var(--surface)">
+  <div class="container">
+    <div class="section-label">Development Phases</div>
+    <div class="section-title">7 Phase 개발 로드맵</div>
+    <div class="section-desc">Foundation부터 Deploy까지 단계적으로 진행. 각 Phase는 완료 조건을 모두 충족해야 다음 Phase로 전환됩니다.</div>
+    <div class="timeline">
+      <div class="phase-item">
+        <div class="phase-dot" style="background:var(--accent)"></div>
+        <div class="phase-header">
+          <span class="phase-num" style="background:rgba(124,108,240,0.15);color:var(--accent)">Phase 1</span>
+          <h3>Foundation</h3>
+          <span class="duration">2~3일</span>
+        </div>
+        <div class="desc">프로젝트 셋업, Supabase 연결, 인증(카카오 로그인), 전체 DB 스키마 마이그레이션</div>
+        <ul class="task-list">
+          <li>Next.js 14 프로젝트 초기화 (App Router + TypeScript + Tailwind)</li>
+          <li>shadcn/ui + Zustand + Supabase 패키지 설치</li>
+          <li>모듈 디렉토리 구조 생성 (M0~M9)</li>
+          <li>Supabase 클라이언트 설정 (Client/Server/Middleware)</li>
+          <li>공용 모듈(M0): Layout, ErrorBoundary, 타입 정의, DPI 유틸</li>
+          <li>DB 마이그레이션: 9개 테이블 + RLS 정책 + Storage 버킷</li>
+          <li>인증 모듈(M1): 카카오 로그인, AuthGuard, 로그인 페이지</li>
+        </ul>
+        <div class="deliverables"><strong>완료 조건:</strong> npm run build 성공, 카카오 로그인/로그아웃 동작, DB 스키마 완료</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-dot" style="background:var(--blue)"></div>
+        <div class="phase-header">
+          <span class="phase-num" style="background:rgba(96,165,250,0.15);color:var(--blue)">Phase 2</span>
+          <h3>Room & Chat</h3>
+          <span class="duration">3~4일</span>
+        </div>
+        <div class="desc">공유방 생성/참여, 실시간 채팅, 카카오톡 공유 초대</div>
+        <ul class="task-list">
+          <li>공유방 모듈(M2): 방 CRUD, share_code 기반 초대 링크, 멤버 관리</li>
+          <li>채팅 모듈(M3): Supabase Realtime, 메시지 송수신, Presence 표시</li>
+          <li>카카오톡 공유 연동: Kakao JS SDK, Feed 메시지로 초대</li>
+          <li>모바일 반응형 채팅 UI, 하단 입력창 고정</li>
+        </ul>
+        <div class="deliverables"><strong>완료 조건:</strong> 방 생성/참여, 실시간 채팅, 카카오톡 초대 링크 공유 동작</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-dot" style="background:var(--teal)"></div>
+        <div class="phase-header">
+          <span class="phase-num" style="background:rgba(45,212,168,0.15);color:var(--teal)">Phase 3</span>
+          <h3>Photo Management</h3>
+          <span class="duration">3~4일</span>
+        </div>
+        <div class="desc">사진 업로드, 이미지 처리 파이프라인, 갤러리, 코멘트</div>
+        <ul class="task-list">
+          <li>다중 사진 업로드 (드래그&드롭 + 모바일 카메라)</li>
+          <li>이미지 처리: 원본 저장, 썸네일(400px), 중간(1200px) 자동 생성</li>
+          <li>EXIF 추출(촬영일시, GPS), 방향 자동 보정</li>
+          <li>갤러리 뷰: 그리드(3/4열) + 타임라인(날짜별) + 전체화면 뷰어</li>
+          <li>사진 코멘트, 포토북/인화용 사진 선택 토글</li>
+        </ul>
+        <div class="deliverables"><strong>완료 조건:</strong> 다중 업로드, 썸네일 생성, 갤러리 뷰 전환, 코멘트 작성</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-dot" style="background:var(--coral)"></div>
+        <div class="phase-header">
+          <span class="phase-num" style="background:rgba(249,112,102,0.15);color:var(--coral)">Phase 4 ⭐</span>
+          <h3>Fabric.js Editor</h3>
+          <span class="duration">5~7일</span>
+        </div>
+        <div class="desc">Fabric.js 기반 표지/내지 편집기. 모바일 터치 최적화 필수. 프로젝트의 핵심 모듈.</div>
+        <ul class="task-list">
+          <li>Fabric.js 캔버스: dynamic import(ssr:false), 사이즈별 300dpi 초기화</li>
+          <li>텍스트 도구: 서버 폰트 로드, 크기/색상/정렬</li>
+          <li>이미지 배치: 사진 추가/교체, 크롭/리사이즈, 필터</li>
+          <li>도형, 클립아트(서버 제공), 배경(단색/그라데이션/이미지)</li>
+          <li>모바일 최적화: 핀치 줌/팬, 터치 선택/이동, 하단 도구 모음</li>
+          <li>히스토리: Undo/Redo, JSON 저장/불러오기, 자동 저장</li>
+          <li>편집 리소스 로드: 폰트/클립아트/배경 API 연동</li>
+        </ul>
+        <div class="deliverables"><strong>완료 조건:</strong> SSR 에러 없음, 편집 도구 전체 동작, 모바일 터치, Undo/Redo, JSON 직렬화</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-dot" style="background:var(--pink)"></div>
+        <div class="phase-header">
+          <span class="phase-num" style="background:rgba(244,114,182,0.15);color:var(--pink)">Phase 5</span>
+          <h3>Photobook + PDF</h3>
+          <span class="duration">5~7일</span>
+        </div>
+        <div class="desc">포토북 자동편집, 표지/내지 커스텀, 300dpi PDF 서버사이드 생성</div>
+        <ul class="task-list">
+          <li>포토북 생성 위저드: 사이즈 선택 → 사진 선택(순서 드래그) → 코멘트 매칭</li>
+          <li>자동 레이아웃 엔진: 1페이지 1사진, 사진비율 최적화, Fabric.js JSON 자동 생성</li>
+          <li>표지 편집: 앞/뒷표지 기본 템플릿 → 편집기(M5) 연결</li>
+          <li>내지 커스텀: 자동편집 결과 미리보기, 개별 페이지 편집기 연결</li>
+          <li>전체 미리보기: 플립북/썸네일 스타일</li>
+          <li>PDF 생성(서버): Fabric.js JSON → Puppeteer 렌더링 → 300dpi PDF → 병합</li>
+        </ul>
+        <div class="deliverables"><strong>완료 조건:</strong> 자동 레이아웃, 편집기 연동, 300dpi PDF 다운로드</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-dot" style="background:var(--amber)"></div>
+        <div class="phase-header">
+          <span class="phase-num" style="background:rgba(245,166,35,0.15);color:var(--amber)">Phase 6</span>
+          <h3>Orders & Admin</h3>
+          <span class="duration">3~4일</span>
+        </div>
+        <div class="desc">인화 주문, 포토북 주문, 관리자 리소스 관리</div>
+        <ul class="task-list">
+          <li>인화 주문: 사진 선택 → 사이즈/수량 → 가격 계산 → 배송지 → 주문</li>
+          <li>포토북 주문: PDF 생성 완료 → 가격(사이즈×페이지수) → 주문</li>
+          <li>관리자: 폰트/클립아트/배경이미지 업로드 관리 (CRUD)</li>
+          <li>주문 대시보드, role-based 관리자 인증</li>
+        </ul>
+        <div class="deliverables"><strong>완료 조건:</strong> 전체 주문 플로우, 리소스 관리 CRUD</div>
+      </div>
+      <div class="phase-item">
+        <div class="phase-dot" style="background:var(--green)"></div>
+        <div class="phase-header">
+          <span class="phase-num" style="background:rgba(74,222,128,0.15);color:var(--green)">Phase 7</span>
+          <h3>Integration & Deploy</h3>
+          <span class="duration">2~3일</span>
+        </div>
+        <div class="desc">전체 통합 테스트, 성능 최적화, Vercel 프로덕션 배포</div>
+        <ul class="task-list">
+          <li>E2E 테스트: 회원가입 → 방 생성 → 사진 업로드 → 포토북 → PDF → 주문</li>
+          <li>성능 최적화: 이미지 lazy loading, PDF 생성 큐, 모바일 프로파일링</li>
+          <li>Vercel 배포, 도메인/SSL, 모니터링 설정</li>
+        </ul>
+        <div class="deliverables"><strong>완료 조건:</strong> E2E 통과, Vercel 프로덕션 배포 완료</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- API Endpoints -->
+<section id="api">
+  <div class="container">
+    <div class="section-label">API Endpoints</div>
+    <div class="section-title">REST API 설계 (30+ 엔드포인트)</div>
+    <div class="section-desc">Next.js API Routes 기반. 모든 API는 Supabase Auth 토큰으로 인증합니다.</div>
+    <div class="card">
+      <div class="api-section">
+        <h4>🏠 Room API</h4>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/rooms</span><span class="api-desc">공유방 생성</span></div>
+        <div class="api-row"><span class="api-method get">GET</span><span class="api-path">/api/rooms</span><span class="api-desc">내 공유방 목록</span></div>
+        <div class="api-row"><span class="api-method get">GET</span><span class="api-path">/api/rooms/:id</span><span class="api-desc">공유방 상세</span></div>
+        <div class="api-row"><span class="api-method put">PUT</span><span class="api-path">/api/rooms/:id</span><span class="api-desc">공유방 수정</span></div>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/rooms/join/:shareCode</span><span class="api-desc">공유방 참여</span></div>
+      </div>
+      <div class="api-section">
+        <h4>📷 Photo API</h4>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/rooms/:id/photos</span><span class="api-desc">사진 업로드 (다중)</span></div>
+        <div class="api-row"><span class="api-method get">GET</span><span class="api-path">/api/rooms/:id/photos</span><span class="api-desc">사진 목록</span></div>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/photos/:pid/comments</span><span class="api-desc">코멘트 작성</span></div>
+        <div class="api-row"><span class="api-method put">PUT</span><span class="api-path">/api/photos/:pid/select</span><span class="api-desc">포토북 선택 토글</span></div>
+      </div>
+      <div class="api-section">
+        <h4>📖 Photobook API</h4>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/photobook/create</span><span class="api-desc">포토북 생성 (자동 편집)</span></div>
+        <div class="api-row"><span class="api-method put">PUT</span><span class="api-path">/api/photobook/:id/cover</span><span class="api-desc">표지 저장 (Fabric.js JSON)</span></div>
+        <div class="api-row"><span class="api-method put">PUT</span><span class="api-path">/api/photobook/:id/pages/:pn</span><span class="api-desc">내지 저장 (Fabric.js JSON)</span></div>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/photobook/:id/generate</span><span class="api-desc">PDF 생성 요청</span></div>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/photobook/:id/order</span><span class="api-desc">포토북 주문</span></div>
+      </div>
+      <div class="api-section">
+        <h4>🖨️ Print & Admin API</h4>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/print-orders</span><span class="api-desc">인화 주문 생성</span></div>
+        <div class="api-row"><span class="api-method get">GET</span><span class="api-path">/api/admin/resources</span><span class="api-desc">편집 리소스 목록</span></div>
+        <div class="api-row"><span class="api-method post">POST</span><span class="api-path">/api/admin/resources</span><span class="api-desc">리소스 등록 (폰트/클립아트/배경)</span></div>
+        <div class="api-row"><span class="api-method delete">DELETE</span><span class="api-path">/api/admin/resources/:id</span><span class="api-desc">리소스 삭제</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Kakao Integration -->
+<section id="kakao" style="background:var(--surface)">
+  <div class="container">
+    <div class="section-label">Kakao Integration</div>
+    <div class="section-title">카카오톡 연동 전략</div>
+    <div class="section-desc">카카오톡 오픈채팅 API는 미제공. 카카오 로그인 + 카카오톡 공유를 조합한 PWA 하이브리드 방식을 채택합니다.</div>
+    <div class="kakao-flow">
+      <div class="kakao-col">
+        <h4>🟡 카카오톡 (초대/알림 채널)</h4>
+        <ul>
+          <li><span class="status-badge ok">✓ 사용</span> 카카오 로그인 (OAuth 2.0)</li>
+          <li><span class="status-badge ok">✓ 사용</span> 카카오톡 공유 (Feed 메시지 초대)</li>
+          <li><span class="status-badge ok">✓ 사용</span> 나에게 보내기 (알림)</li>
+          <li><span class="status-badge partial">⚠ 제한</span> 친구에게 보내기 (권한 필요)</li>
+          <li><span class="status-badge no">✕ 불가</span> 오픈채팅방 API (미제공)</li>
+          <li><span class="status-badge no">✕ 불가</span> 채널 자동 개설 (미제공)</li>
+        </ul>
+      </div>
+      <div class="kakao-mid">
+        <div>→</div>
+        <div style="font-size:10px;writing-mode:vertical-lr">링크 클릭</div>
+        <div>→</div>
+      </div>
+      <div class="kakao-col">
+        <h4>🟣 ShareSnap PWA (메인 서비스)</h4>
+        <ul>
+          <li><span class="status-badge ok">✓ 자체</span> 공유방 개설/참여</li>
+          <li><span class="status-badge ok">✓ 자체</span> 실시간 채팅 (Supabase Realtime)</li>
+          <li><span class="status-badge ok">✓ 자체</span> 사진 업로드/갤러리</li>
+          <li><span class="status-badge ok">✓ 자체</span> Fabric.js 포토북 편집기</li>
+          <li><span class="status-badge ok">✓ 자체</span> 300dpi PDF 생성</li>
+          <li><span class="status-badge ok">✓ 자체</span> Web Push 알림</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Agent Orchestration -->
+<section id="agents">
+  <div class="container">
+    <div class="section-label">Multi-Agent Orchestration</div>
+    <div class="section-title">6개 서브에이전트 오케스트레이션</div>
+    <div class="section-desc">Claude Code 오토파일럿으로 각 Phase를 자동 진행. 에이전트 간 순차/병렬 실행으로 품질을 보장합니다.</div>
+    <div class="agent-grid">
+      <div class="agent-card">
+        <div class="agent-icon" style="background:rgba(124,108,240,0.15);color:var(--accent)">📋</div>
+        <h4>A1 Planning</h4>
+        <p>태스크 분해, 스펙 작성, 의존성 분석</p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:rgba(45,212,168,0.15);color:var(--teal)">💻</div>
+        <h4>A2 Developer</h4>
+        <p>코드 구현, API, DB 마이그레이션</p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:rgba(244,114,182,0.15);color:var(--pink)">🎨</div>
+        <h4>A3 Designer</h4>
+        <p>UI/UX, 스타일링, 모바일 최적화</p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:rgba(96,165,250,0.15);color:var(--blue)">🔧</div>
+        <h4>A4 Ops</h4>
+        <p>인프라, 배포, 환경 설정</p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:rgba(245,166,35,0.15);color:var(--amber)">🔍</div>
+        <h4>A5 QC</h4>
+        <p>코드 리뷰, 타입 안전성, 보안</p>
+      </div>
+      <div class="agent-card">
+        <div class="agent-icon" style="background:rgba(74,222,128,0.15);color:var(--green)">🧪</div>
+        <h4>A6 Tester</h4>
+        <p>단위/통합/E2E 테스트</p>
+      </div>
+    </div>
+
+    <!-- Pipeline -->
+    <div class="pipeline">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:20px">파이프라인 흐름 (Phase별 에이전트 순서)</h4>
+      <div class="pipeline-phase">
+        <span class="pipe-label">Phase 1</span>
+        <span class="pipe-node" style="background:rgba(124,108,240,0.15);color:var(--accent)">A1 기획</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(45,212,168,0.15);color:var(--teal)">A2 구현</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(245,166,35,0.15);color:var(--amber)">A5 리뷰</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(74,222,128,0.2);color:var(--green)">✓ Pass</span>
+      </div>
+      <div class="pipeline-phase">
+        <span class="pipe-label">Phase 2~5</span>
+        <span class="pipe-node" style="background:rgba(45,212,168,0.15);color:var(--teal)">A2 구현</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(244,114,182,0.15);color:var(--pink)">A3 스타일</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(245,166,35,0.15);color:var(--amber)">A5 리뷰</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(74,222,128,0.15);color:var(--green)">A6 테스트</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(74,222,128,0.2);color:var(--green)">✓ Pass</span>
+      </div>
+      <div class="pipeline-phase">
+        <span class="pipe-label">Phase 7</span>
+        <span class="pipe-node" style="background:rgba(74,222,128,0.15);color:var(--green)">A6 E2E</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(96,165,250,0.15);color:var(--blue)">A4 배포</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(245,166,35,0.15);color:var(--amber)">A5 검증</span>
+        <span class="pipe-arrow">→</span>
+        <span class="pipe-node" style="background:rgba(74,222,128,0.2);color:var(--green)">🚀 Launch</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Document System -->
+<section id="docs" style="background:var(--surface)">
+  <div class="container">
+    <div class="section-label">Session Management</div>
+    <div class="section-title">Claude Code 문서 체계</div>
+    <div class="section-desc">세션이 끊어져도 즉시 이어서 개발할 수 있는 4개 파일 기반 문서 시스템</div>
+    <div class="doc-system">
+      <div class="doc-card" style="border-left:3px solid var(--coral)">
+        <h4>CLAUDE.md</h4>
+        <div class="doc-purpose">마스터 지시 파일 (자동 로드)</div>
+        <ul>
+          <li>프로젝트 개요, 기술스택</li>
+          <li>절대 규칙 (SSR 방지, 모듈 구조, DPI)</li>
+          <li>코딩/커밋 컨벤션</li>
+          <li>세션 시작 프로토콜</li>
+        </ul>
+      </div>
+      <div class="doc-card" style="border-left:3px solid var(--blue)">
+        <h4>STATUS.md</h4>
+        <div class="doc-purpose">진행 상황 + 다음 작업 (매 세션 필독)</div>
+        <ul>
+          <li>CURRENT_PHASE, CURRENT_TASK, PROGRESS</li>
+          <li>[NEXT_ACTION] — 즉시 실행할 명령어</li>
+          <li>Phase별 체크박스 진행 현황</li>
+          <li>세션 로그, 빌드 상태, 알려진 이슈</li>
+        </ul>
+      </div>
+      <div class="doc-card" style="border-left:3px solid var(--purple, var(--accent))">
+        <h4>MEMORY.md</h4>
+        <div class="doc-purpose">누적 기억 (의사결정 + 패턴)</div>
+        <ul>
+          <li>아키텍처 결정 기록 (ADR)</li>
+          <li>검증된 코드 패턴 (카카오, Supabase 등)</li>
+          <li>해결된 이슈 아카이브</li>
+          <li>환경 설정 메모</li>
+        </ul>
+      </div>
+      <div class="doc-card" style="border-left:3px solid var(--teal)">
+        <h4>ORCHESTRATION.md</h4>
+        <div class="doc-purpose">Phase별 태스크 + 파일 목록</div>
+        <ul>
+          <li>태스크별 생성할 파일 전체 목록</li>
+          <li>핵심 코드 패턴/스니펫</li>
+          <li>검증 명령어 (tsc, build)</li>
+          <li>Phase 전환 조건</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:32px">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:16px">세션 라이프사이클</h4>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px">
+        <span style="background:rgba(245,166,35,0.15);color:var(--amber);padding:8px 16px;border-radius:8px">① STATUS.md 읽기</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(124,108,240,0.15);color:var(--accent);padding:8px 16px;border-radius:8px">② MEMORY.md 읽기</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(45,212,168,0.15);color:var(--teal);padding:8px 16px;border-radius:8px">③ NEXT_ACTION 실행</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(96,165,250,0.15);color:var(--blue);padding:8px 16px;border-radius:8px">④ tsc + build 검증</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(244,114,182,0.15);color:var(--pink);padding:8px 16px;border-radius:8px">⑤ STATUS 업데이트</span>
+        <span style="color:var(--text3)">→</span>
+        <span style="background:rgba(74,222,128,0.15);color:var(--green);padding:8px 16px;border-radius:8px">⑥ 세션 종료 (재개 가능)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Risk Management -->
+<section id="risks">
+  <div class="container">
+    <div class="section-label">Risk Management</div>
+    <div class="section-title">리스크 & 대응 전략</div>
+    <div class="card" style="overflow-x:auto">
+      <table class="risk-table">
+        <thead>
+          <tr><th>리스크</th><th>심각도</th><th>영향</th><th>대응 전략</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Fabric.js SSR 충돌</td><td class="risk-high">높음</td><td>빌드 실패</td><td>dynamic import + ssr:false 철저 적용, 빌드 시 자동 검증</td></tr>
+          <tr><td>대용량 이미지 업로드</td><td class="risk-high">높음</td><td>서버 부하, 느린 UX</td><td>클라이언트 사전 리사이즈, chunk upload, 프로그레스바</td></tr>
+          <tr><td>PDF 생성 시간</td><td class="risk-mid">중간</td><td>UX 저하</td><td>비동기 큐 + 진행률 표시 + Web Push 완료 알림</td></tr>
+          <tr><td>모바일 편집기 성능</td><td class="risk-mid">중간</td><td>터치 반응 느림</td><td>오브젝트 수 제한, 캔버스 해상도 최적화, 제스처 디바운스</td></tr>
+          <tr><td>폰트 렌더링 차이</td><td class="risk-mid">중간</td><td>화면≠인쇄</td><td>서버 동일 폰트 임베드, PDF/X-4 규격 준수</td></tr>
+          <tr><td>300dpi 파일 용량</td><td class="risk-mid">중간</td><td>스토리지 비용</td><td>JPEG Q95 압축, CDN 캐싱, 생성 후 일정기간 보관</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div style="font-size:18px;font-weight:700;margin-bottom:8px">📸 ShareSnap</div>
+  <p>사진 공유 & 포토북 서비스 — 개발 계획 대시보드 v1.0</p>
+  <p style="margin-top:8px;color:var(--text3)">2026.04 · Next.js 14 + Supabase + Fabric.js + Tailwind CSS</p>
+</footer>
+
+<script>
+document.querySelectorAll('.nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const id = a.getAttribute('href');
+    document.querySelector(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) e.target.classList.add('fade-in');
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.flow-card, .stack-card, .module-card, .table-card, .spec-card, .agent-card, .phase-item, .doc-card').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

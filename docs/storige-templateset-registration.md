@@ -255,3 +255,68 @@ vercel env add STORIGE_TEMPLATE_SET_ID preview   # 필요 시
 | 스프레드 설정 모달 필드 | `storige/apps/admin/src/pages/Templates/TemplateEditor.tsx:413-505` |
 | 하드커버 제본 정의(margin 2.0mm) | `storige/apps/api/src/database/seeds/spine-seed.service.ts:83-88` |
 | 샘플 포토북 시드(8×8inch, spread+page) | `storige/apps/api/migrations/20260508_seed_sample_template_set.sql` |
+
+---
+
+## 부록 B: 210×210 4P 시드 적용
+
+등록 API(`POST /template-sets`, `POST /templates`)는 `X-API-Key` 가 **Admin 전용(401)** 이라 외부에서 호출할 수 없다. 따라서 ShareSnap 포토북용 **정사각 210×210mm 하드커버 4P 템플릿셋**은 **SQL 시드로 직접 주입**한다. 아래 시드는 표지 spread 1개 + 내지 page 4개를 묶은 책모드(book) 셋을 고정 ID 로 만든다.
+
+### B-1. 시드 파일
+
+- 경로: **`sharesnap/docs/storige-seed-210x210-photobook.sql`**
+- 문법: MariaDB, `INSERT ... ON DUPLICATE KEY UPDATE` (재실행 안전 / idempotent)
+- 고정 ID (컬럼명은 엔티티 `template.entity.ts` / `template-set.entity.ts` 기준):
+  | 대상 | 테이블 | id | 핵심 컬럼 |
+  |------|--------|-----|-----------|
+  | 표지 스프레드 | `templates` | `photobook-spread-cover-210` | `type='spread'`, `width=420.2`, `height=210`, `editable=true`, `deleteable=false`, `spread_config` (coverWidthMm=210, coverHeightMm=210, spineWidthMm=0.2, wingEnabled=false, cutSizeMm=3, safeSizeMm=5, dpi=300) |
+  | 내지 | `templates` | `photobook-page-210` | `type='page'`, `width=210`, `height=210`, `editable=true`, `deleteable=true`, `spread_config=NULL` |
+  | 템플릿셋 | `template_sets` | `photobook-210-book-4p` | `type='book'`, `editor_mode='book'`, `width=210`, `height=210`, `can_add_page=true`, `page_count_range=[4,8,...,40]`, `templates`=표지1(required)+내지4, `bleed_mm=3`, `color_mode='rgb'`, `cover_editable=true`, `enabled_menus=NULL` |
+
+> **"4P" 의미**: 여기서 4P = "내지 4페이지" 단위. 셋은 표지 spread 1 + 내지 page 4(기본 4면)로 구성되고, `can_add_page=true` + `page_count_range=[4,8,…,40]` 이라 고객이 **4페이지 단위로 증감**할 수 있다.
+>
+> ⚠️ **책등(spineWidthMm=0.2)·총폭(width=420.2)은 정적 고정값이 아니다.** 빈 시안 캔버스의 표기용 초기값이며, 실제 책등 폭은 주문 페이지수/용지/제본(하드커버 bindingMargin=2.0mm)에 따라 편집기·워커가 `max(0, (pageCount/2)×paperThickness + bindingMargin)` 로 동적 계산한다. 서버 검증(`validateSpreadAgainstAuthority`)도 표지 기하(cover/wing)만 대조하고 책등/총폭은 비교하지 않는다.
+
+### B-2. 적용 명령
+
+**(a) docker mariadb 직접 주입** (운영 DB 이름/유저는 환경에 맞게 — storige 레포 기준 db=storige, user=storige):
+```bash
+docker-compose exec mysql \
+  mariadb -ustorige -p storige < \
+  docs/storige-seed-210x210-photobook.sql
+```
+
+**(b) Admin 수동 등록**: 같은 컬럼값으로 Admin 폼에서 등록. 단 Admin spread 모달엔 `cutSizeMm`/`safeSizeMm`/`dpi` 입력란이 없어(§2-1), spread spec 의 이 값들(cutSize=3, safeSize=5, dpi=300)을 정확히 맞추려면 (a) SQL 주입이 정석이다.
+
+### B-3. env 설정 (ShareSnap, 코드 무변경)
+
+시드 적용 후 ShareSnap 은 env 하나만 설정한다(`getTemplateSetId()` 우선순위 — §5-2):
+```bash
+# 로컬 sharesnap/.env.local
+STORIGE_TEMPLATE_SET_ID=photobook-210-book-4p
+
+# Vercel
+vercel env add STORIGE_TEMPLATE_SET_ID production
+vercel env add STORIGE_TEMPLATE_SET_ID preview   # 필요 시
+```
+미설정 시 dev 기본값(`a2cc2939…`)으로 폴백한다 — 반드시 설정해야 새 셋이 적용된다.
+
+### B-4. 검증
+
+1. **DB 행 확인** (시드 직후):
+   ```sql
+   SELECT id, type, width, height FROM templates
+     WHERE id IN ('photobook-spread-cover-210','photobook-page-210');
+   SELECT id, type, editor_mode, width, height, can_add_page,
+          page_count_range, cover_editable, bleed_mm, color_mode
+     FROM template_sets WHERE id = 'photobook-210-book-4p';
+   ```
+   → spread 1행(420.2×210) + page 1행(210×210), 셋 1행(book/book, 210×210)이 나와야 한다.
+2. **세션 생성**: ShareSnap "편집하기" 진입 → `POST /api/storige/session` 200 응답. 서버 로그/네트워크에서 `/edit-sessions` body 의 `templateSetId` 가 `photobook-210-book-4p` 인지 확인(dev 기본값 `a2cc2939…` 가 아니어야 함).
+3. **편집기 로드**: `/embed?sessionId=…` 가 **정사각 210 스프레드 표지 + 내지** 로 열리고, 이미지 패널에 **"공유방 사진" 탭**이 보이는지 육안 확인.
+4. **재실행 안전성**: 시드를 한 번 더 실행해도 `ON DUPLICATE KEY UPDATE` 로 동일 결과(에러/중복 없음)인지 확인.
+5. **롤백** (필요 시):
+   ```sql
+   DELETE FROM template_sets WHERE id = 'photobook-210-book-4p';
+   DELETE FROM templates     WHERE id IN ('photobook-spread-cover-210','photobook-page-210');
+   ```

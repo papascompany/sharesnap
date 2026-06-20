@@ -19,6 +19,29 @@ import {
   STORIGE_NOT_CONFIGURED,
 } from "@/modules/photobook/services/storigeServer";
 import { buildExternalPhotosForRoom } from "@/modules/photobook/services/photobookServer";
+import { buildAutoLayoutCanvasData } from "@/modules/photobook/services/autoLayout";
+import {
+  STORIGE_PHOTOBOOK_PAGE_W_MM,
+  STORIGE_PHOTOBOOK_PAGE_H_MM,
+} from "@/modules/shared/lib/constants";
+
+/** 자동배치 페이지 판형(mm) — env 오버라이드 후 기본값 폴백 (유효 양수만 채택) */
+function getPhotobookPageMm(): { pageWidthMm: number; pageHeightMm: number } {
+  const parse = (raw: string | undefined, fallback: number): number => {
+    const n = Number(raw);
+    return Number.isFinite(n) && n > 0 ? n : fallback;
+  };
+  return {
+    pageWidthMm: parse(
+      process.env.STORIGE_PHOTOBOOK_PAGE_W_MM,
+      STORIGE_PHOTOBOOK_PAGE_W_MM,
+    ),
+    pageHeightMm: parse(
+      process.env.STORIGE_PHOTOBOOK_PAGE_H_MM,
+      STORIGE_PHOTOBOOK_PAGE_H_MM,
+    ),
+  };
+}
 
 /** Storige upstream 호출 실패 식별용 마커 — 502로 분기 */
 class StorigeUpstreamError extends Error {}
@@ -137,12 +160,21 @@ export async function POST(request: NextRequest) {
         );
         sessionId = order.storige_session_id;
       } else {
+        // 신규 세션: 자동배치 canvasData 주입 (표지 null + 내지별 사진 1장).
+        // externalPhotos는 그대로 유지 → 편집기 "공유방 사진" 탭에서 추가 배치 가능.
+        const { pageWidthMm, pageHeightMm } = getPhotobookPageMm();
+        const canvasData = buildAutoLayoutCanvasData(externalPhotos, {
+          pageWidthMm,
+          pageHeightMm,
+        });
+
         const created = await createEditSession(session.accessToken, {
           mode: "both",
           templateSetId: getTemplateSetId(),
           orderSeqno: order.order_no,
           callbackUrl: getWebhookUrl(request.nextUrl.origin),
           externalPhotos,
+          canvasData,
         });
         sessionId = created.sessionId;
 

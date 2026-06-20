@@ -28,10 +28,9 @@ E2E 검증 완료       : 로그인(매직링크/auth/confirm) → 방생성 →
 ## [NEXT_ACTION] — 다음 세션에서 즉시 실행할 작업
 
 ```bash
-# 1) 작업 디렉토리: /Users/yohan/Documents/claude/Sharesnap/sharesnap
-# 2) Phase 4 — Fabric.js 편집기 (M5). ORCHESTRATION.md Phase 4 + docs/dev-plan.md M5 참조
-#    ⚠ 절대 규칙: Fabric.js는 dynamic import + ssr:false (직접 import 시 빌드 실패)
-#    npm install fabric 후 T4.1(캔버스 기초)부터. dpiConverter.ts(이미 구현됨) 사용
+# 1) 작업 디렉토리: /Users/yohan/Documents/claude/Sharesnap  ← 2026-06-20 중첩 제거(단일 루트). 옛 .../Sharesnap/sharesnap 아님
+# 2) Phase 4(편집기)는 Storige 임베드 연동으로 대체됨(ADR-011) — 자체 Fabric 구현 폐기.
+#    다음은 운영 셋업: 도메인 확정 → 카카오 앱키 → Supabase 프로덕션 → Storige 시드 적용 (docs/integration-inventory.md §운영 블로커)
 # 3) Phase 3 잔여 후속(소규모, Phase 4 진입 전 처리 권장):
 #    - /rooms/[id]에서 ?welcome=1 수신 시 환영 toast 1회 (자동 입장 후 안내)
 #    - maskable 아이콘 2종(icon-192/512-maskable.png) 생성 + manifest purpose:maskable 분리 (Phase 7 TWA 전 필수)
@@ -190,6 +189,7 @@ npx tsc --noEmit && npm run lint && npm run build
 | 2026-06-13 | #3 | E2E | 로컬 Supabase(55321) + 크롬 화면 테스트 — 로그인/방/채팅/업로드/갤러리/뷰어/포토북토글/Storige임베드 전구간. PhotoViewer StrictMode 버그 수정 | ✅ | ~30m |
 | 2026-06-13 | #3 | Storige v2 | 세션 사전생성+externalPhotos(공유방 사진) 주입 개편(워크플로우 2트랙) — /session 개편+/reedit 신설+createEditSession, sessionId 임베드, complete→compose. 미들웨어 /api redirect 버그 수정(웹훅 차단 해소). build 클린 | ✅ | ~10m |
 | 2026-06-13 | #3 | 실키 스모크 | 실제 STORIGE_API_KEY로 §5 전구간 — 세션생성(200)→편집기 로드→공유방사진 4장 주입→캔버스 배치→편집완료→compose(200)→PDF다운로드→webhook 모사→pdfs버킷+pdf_ready. 전부 통과 | ✅ | ~15m |
+| 2026-06-15 | #4 | 템플릿+자동배치 | 210×210 4P 시드 SQL 작성 + 사진 자동배치(canvasData 주입) 구현. 실측 좌표계 기반 autoLayout.ts. 실키 검증: canvas_data 덤프 정확 + https 이미지 편집기 cover-fit 렌더 증명(dev http는 Mixed Content). build 클린 | ✅ | ~35m |
 
 ---
 

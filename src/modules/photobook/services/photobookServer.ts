@@ -30,7 +30,7 @@ export async function buildExternalPhotosForRoom(
   const { data, error } = await supabase
     .from("photos")
     .select(
-      "print_path, medium_path, thumbnail_path, original_filename, taken_at, created_at",
+      "print_path, medium_path, thumbnail_path, original_filename, width, height, taken_at, created_at",
     )
     .eq("room_id", roomId)
     .order("created_at", { ascending: true });
@@ -55,6 +55,9 @@ export async function buildExternalPhotosForRoom(
       url,
       name: row.original_filename ?? "photo.jpg",
       ...(thumbnailUrl && { thumbnailUrl }),
+      // 원본 px — 자동배치 cover-fit scale 계산용 (null이면 생략 → 정사각 폴백)
+      ...(row.width != null && { width: row.width }),
+      ...(row.height != null && { height: row.height }),
       uploadedAt: row.taken_at ?? row.created_at,
     });
   }
