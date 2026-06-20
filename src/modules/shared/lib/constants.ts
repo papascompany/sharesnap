@@ -1,0 +1,50 @@
+// 프로젝트 전역 상수
+
+import type { BookSize } from "@/modules/shared/types/global";
+
+export const APP_NAME = "ShareSnap";
+export const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
+// 300dpi 기준 책 사이즈 (mm)
+export const BOOK_SIZES: Record<
+  BookSize,
+  { widthMm: number; heightMm: number; label: string }
+> = {
+  A4: { widthMm: 210, heightMm: 297, label: "A4 (210×297mm)" },
+  A5: { widthMm: 148, heightMm: 210, label: "A5 (148×210mm)" },
+  "210x210": { widthMm: 210, heightMm: 210, label: "정사각 (210×210mm)" },
+};
+
+// 인쇄 안전영역/블리드 (mm)
+export const BLEED_MM = 3;
+export const SAFE_MARGIN_MM = 5;
+export const DPI = 300;
+
+// Supabase Storage 버킷
+export const STORAGE_BUCKETS = {
+  PHOTOS: "photos",
+  THUMBNAILS: "thumbnails",
+  RESOURCES: "resources",
+  PDFS: "pdfs",
+} as const;
+
+// Realtime 채널 네이밍 규칙
+export const realtimeChannel = (roomId: string) => `room:${roomId}`;
+
+// 사진 업로드 제한
+export const MAX_PHOTO_SIZE_MB = 20;
+export const MAX_PHOTOS_PER_UPLOAD = 30;
+
+// 포토북 페이지 수 제한
+export const PHOTOBOOK_PAGE_MIN = 8;
+export const PHOTOBOOK_PAGE_MAX = 80;
+
+// 공유방 share_code 길이
+export const SHARE_CODE_LENGTH = 8;
+
+// Storige 편집세션 dev 템플릿셋 ID
+// dev 배선용 상수 — 실제 포토북 templateSet은 Storige가 별도 제공한다.
+// 운영에서는 env STORIGE_TEMPLATE_SET_ID로 오버라이드 (getTemplateSetId() 참조)
+export const STORIGE_DEV_TEMPLATE_SET_ID =
+  "a2cc2939-b76d-41a2-bd41-2d9fba091a24";

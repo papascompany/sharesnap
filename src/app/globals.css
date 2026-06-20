@@ -1,26 +1,265 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ─────────────────────────────────────────────
+   폰트 + 모션 토큰 (정적 @theme — 값 직접 정의)
+   ───────────────────────────────────────────── */
+@theme {
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system,
+    BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI",
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* 모션 — animate-fade-up 등 유틸리티로 사용 */
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fade-in 0.3s ease-out both;
+  --animate-scale-in: scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-shimmer: shimmer 1.8s linear infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to   { opacity: 1; transform: scale(1); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* shimmer는 skeleton 커스텀 유틸리티에서 직접 참조하므로
+   @theme 외부에 정의 (tree-shaking 방지 — animate-shimmer 클래스 미사용 시에도 항상 포함) */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+
+/* ─────────────────────────────────────────────
+   시맨틱 토큰 매핑 (shadcn 호환 — 기존 구조 유지)
+   ───────────────────────────────────────────── */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* ShareSnap 브랜드 확장 토큰 */
+  --color-kakao: var(--kakao);                       /* bg-kakao */
+  --color-kakao-foreground: var(--kakao-foreground); /* text-kakao-foreground */
+  --color-amber-brand: var(--amber-brand);           /* text-amber-brand 등 */
+  --color-coral-deep: var(--coral-deep);             /* 소형 텍스트용 진코랄 */
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ─────────────────────────────────────────────
+   LIGHT — 웜 페이퍼 위의 선셋 코랄
+   ───────────────────────────────────────────── */
+:root {
+  --background: oklch(0.985 0.005 84);          /* 웜 오프화이트 ≈ #FBF8F3 */
+  --foreground: oklch(0.235 0.012 40);          /* 웜 차콜 */
+  --card: oklch(1 0 0);                          /* 순백 카드 — 배경과 미세 분리 */
+  --card-foreground: oklch(0.235 0.012 40);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.235 0.012 40);
+  --primary: oklch(0.655 0.19 32);              /* ★ 선셋 코랄 ≈ #F2654C */
+  --primary-foreground: oklch(0.99 0.005 80);
+  --secondary: oklch(0.955 0.012 70);           /* 웜 샌드 */
+  --secondary-foreground: oklch(0.35 0.02 40);
+  --muted: oklch(0.955 0.008 80);
+  --muted-foreground: oklch(0.50 0.015 50);
+  --accent: oklch(0.945 0.035 75);              /* 앰버 틴트 (hover/선택 배경) */
+  --accent-foreground: oklch(0.42 0.07 50);
+  --destructive: oklch(0.577 0.225 27);
+  --border: oklch(0.912 0.01 75);
+  --input: oklch(0.912 0.01 75);
+  --ring: oklch(0.655 0.19 32);
+  --chart-1: oklch(0.655 0.19 32);   /* 코랄 */
+  --chart-2: oklch(0.78 0.15 70);    /* 앰버 */
+  --chart-3: oklch(0.86 0.13 92);    /* 골든 */
+  --chart-4: oklch(0.62 0.10 200);   /* 더스크 틸 */
+  --chart-5: oklch(0.55 0.12 310);   /* 트와일라잇 플럼 */
+  --radius: 0.75rem;                 /* 기존 0.625 → 0.75 (부드러운 프리미엄 라운드) */
+  --sidebar: oklch(0.985 0.005 84);
+  --sidebar-foreground: oklch(0.235 0.012 40);
+  --sidebar-primary: oklch(0.655 0.19 32);
+  --sidebar-primary-foreground: oklch(0.99 0.005 80);
+  --sidebar-accent: oklch(0.955 0.008 80);
+  --sidebar-accent-foreground: oklch(0.35 0.02 40);
+  --sidebar-border: oklch(0.912 0.01 75);
+  --sidebar-ring: oklch(0.655 0.19 32);
+
+  /* 브랜드 확장 */
+  --kakao: #FEE500;                              /* 카카오 버튼 전용 — 다른 곳 사용 금지 */
+  --kakao-foreground: #191919;
+  --amber-brand: oklch(0.78 0.15 70);
+  --coral-deep: oklch(0.555 0.175 30);           /* 흰 배경 위 소형 텍스트용 (4.5:1↑) */
+  --gradient-sunset: linear-gradient(135deg,
+    oklch(0.655 0.19 32) 0%,
+    oklch(0.72 0.17 50) 55%,
+    oklch(0.80 0.15 75) 100%);
+  --scrim-photo: linear-gradient(to top,
+    oklch(0.15 0.01 40 / 0.72) 0%, transparent 45%);
+  --shimmer-highlight: oklch(1 0 0 / 0.45);
+}
+
+/* ─────────────────────────────────────────────
+   DARK — 웜 블랙 시네마
+   ───────────────────────────────────────────── */
+.dark {
+  --background: oklch(0.165 0.008 45);          /* 웜 니어블랙 ≈ #1B1715 */
+  --foreground: oklch(0.955 0.005 80);
+  --card: oklch(0.21 0.01 50);
+  --card-foreground: oklch(0.955 0.005 80);
+  --popover: oklch(0.23 0.01 50);
+  --popover-foreground: oklch(0.955 0.005 80);
+  --primary: oklch(0.72 0.165 35);              /* 다크에선 한 톤 밝은 코랄 */
+  --primary-foreground: oklch(0.205 0.04 30);   /* 코랄 위 진갈색 텍스트 (7:1↑) */
+  --secondary: oklch(0.27 0.012 50);
+  --secondary-foreground: oklch(0.93 0.008 75);
+  --muted: oklch(0.26 0.01 50);
+  --muted-foreground: oklch(0.71 0.012 60);
+  --accent: oklch(0.30 0.03 55);
+  --accent-foreground: oklch(0.90 0.06 70);
+  --destructive: oklch(0.70 0.19 22);
+  --border: oklch(0.95 0.01 70 / 12%);
+  --input: oklch(0.95 0.01 70 / 16%);
+  --ring: oklch(0.72 0.165 35);
+  --chart-1: oklch(0.72 0.165 35);
+  --chart-2: oklch(0.80 0.14 70);
+  --chart-3: oklch(0.87 0.12 92);
+  --chart-4: oklch(0.68 0.10 200);
+  --chart-5: oklch(0.65 0.12 310);
+  --sidebar: oklch(0.21 0.01 50);
+  --sidebar-foreground: oklch(0.955 0.005 80);
+  --sidebar-primary: oklch(0.72 0.165 35);
+  --sidebar-primary-foreground: oklch(0.205 0.04 30);
+  --sidebar-accent: oklch(0.26 0.01 50);
+  --sidebar-accent-foreground: oklch(0.93 0.008 75);
+  --sidebar-border: oklch(0.95 0.01 70 / 12%);
+  --sidebar-ring: oklch(0.72 0.165 35);
+
+  /* 카카오 옐로는 다크에서도 동일 (카카오 디자인 가이드 — 다크 변형 없음) */
+  --kakao: #FEE500;
+  --kakao-foreground: #191919;
+  --amber-brand: oklch(0.80 0.14 70);
+  --coral-deep: oklch(0.80 0.12 42);             /* 다크 배경 위 소형 코랄 텍스트 */
+  --gradient-sunset: linear-gradient(135deg,
+    oklch(0.60 0.18 32) 0%,
+    oklch(0.67 0.16 50) 55%,
+    oklch(0.74 0.14 75) 100%);
+  --scrim-photo: linear-gradient(to top,
+    oklch(0 0 0 / 0.8) 0%, transparent 45%);
+  --shimmer-highlight: oklch(1 0 0 / 0.07);
+}
+
+/* ─────────────────────────────────────────────
+   커스텀 유틸리티
+   ───────────────────────────────────────────── */
+@utility bg-sunset {
+  background-image: var(--gradient-sunset);
+}
+@utility text-sunset {
+  background-image: var(--gradient-sunset);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility bg-scrim-photo {
+  background-image: var(--scrim-photo);
+}
+@utility skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background-color: var(--color-muted);
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--shimmer-highlight), transparent);
+    animation: shimmer 1.8s linear infinite;
+  }
+}
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ─────────────────────────────────────────────
+   베이스
+   ───────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent; /* 모바일 탭 회색 플래시 제거 */
+  }
+  body {
+    @apply bg-background text-foreground;
+    word-break: keep-all;            /* 한글 단어 단위 줄바꿈 */
+    overflow-wrap: break-word;
+    letter-spacing: -0.01em;         /* Pretendard 한글 기본 자간 보정 */
+  }
+  ::selection {
+    background: oklch(0.655 0.19 32 / 0.25);
+  }
+  /* 모션 민감 사용자 — 모든 애니메이션 즉시 종료 */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
