@@ -230,8 +230,12 @@ Service Key  : (프로젝트 생성 후 기록)
 ```
 App Key (JS) : (앱 등록 후 기록)
 REST API Key : (앱 등록 후 기록)
-Redirect URI : https://sharesnap.app/auth/callback/kakao
+Redirect URI : https://sharesnap.app/auth/callback
 ```
+> [정정 2026-06-20] Redirect URI를 `/auth/callback/kakao` → `/auth/callback`으로 수정.
+> 근거: 실제 콜백 라우트 핸들러가 `src/app/auth/callback/route.ts`(=`/auth/callback`)이고,
+> OAuth `redirectTo`도 `${window.location.origin}/auth/callback`(패턴1, 본 파일 L135)이라 코드와 일치시킴.
+> (참고: Supabase Auth가 카카오 토큰 교환을 대행하므로 provider별 `/kakao` 하위 경로는 불필요)
 
 ---
 
