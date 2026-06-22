@@ -6,13 +6,13 @@
 ## 현재 상태
 
 ```
-CURRENT_PHASE    : Phase 4 완료 (Storige 임베드 연동 — ADR-011/v2, 실키 E2E 검증)
-CURRENT_TASK     : Phase 5(주문) 또는 운영 오픈 준비(§6 회신 4건 + 실제 포토북 templateSet)
-PROGRESS         : Phase 1+2+3+4(Storige) 완료 / 전체 ~55%
-LAST_SESSION     : 2026-06-13 (세션 #3, Storige v2 + 실키 스모크 E2E)
-LAST_ACTION      : Storige v2(세션생성+externalPhotos 주입) 개편 후 실제 STORIGE_API_KEY로 §5 전구간 스모크 검증 — 세션생성→편집기 로드→"공유방 사진"탭 4장 주입→캔버스 배치→편집완료→compose→PDF 다운로드(cover 1.2MB/content)→webhook→pdfs버킷→pdf_ready. 미들웨어 /api redirect 버그(웹훅차단) 수정.
-BUILD_STATUS     : ✅ 성공 (Next.js 16.2.6 Turbopack, 14 routes, lint 0)
-BLOCKED_BY       : 운영 오픈 전 §6 회신 4건(도메인/하드커버 상품구성/웹훅URL/회원체계) + 실제 포토북 templateSet(현재 dev용 A4 책자). 프로덕션 webhook은 공개 도메인 필요(dev는 localhost라 모사 검증).
+CURRENT_PHASE    : 프로덕션 배포 + 실프로덕션 E2E 검증 (Supabase rtnfltwmnizkjrrgjudk + Vercel sharesnap-three)
+CURRENT_TASK     : 운영 오픈 잔여 외부작업(카카오 앱키, Storige webhook allowlist) + Phase 5(주문 결제) 진입
+PROGRESS         : Phase 1+2+3+4(Storige)+프로덕션배포 완료 / 전체 ~60%
+LAST_SESSION     : 2026-06-22 (세션 #6, 프로덕션 배포·502 근본수정·실키 E2E)
+LAST_ACTION      : 프로덕션(sharesnap-three.vercel.app)에 실 Supabase/Storige 연결 후 E2E — 사진4장 업로드→포토북 세션생성 502 발견. 원인=Vercel STORIGE_API_URL 빈 문자열 env에서 `?? DEFAULT` 폴백 미작동. env 재설정+재배포로 200 복구 확인(sessionId 발급, canvasData=[null,4×내지] 전부 https 이미지 cover-fit, templateSetId=photobook-210-book-4p). 코드 근본수정: 동일 패턴 4곳 `?? → ||`(commit 47a7906).
+BUILD_STATUS     : ✅ 로컬 빌드는 머신 과부하(load~100)로 미완 → Vercel 원격 빌드가 실 게이트. 변경은 타입동일(?? → ||)이라 빌드 무해.
+BLOCKED_BY       : 운영 오픈 전 외부작업 — 카카오 앱키(NEXT_PUBLIC_KAKAO_JS_KEY·Provider) + Storige Admin에 sharesnap-three.vercel.app webhook(uploadCallbackUrl)·allowedOrigins 등록. 사용자 확인대기: Realtime publication(messages/photos).
 ```
 
 ## 로컬 테스트 환경 (세션 #3 구축)
@@ -25,25 +25,31 @@ E2E 검증 완료       : 로그인(매직링크/auth/confirm) → 방생성 →
 재현 방법           : supabase start && npm run dev, 매직링크는 admin generate_link API 또는 Mailpit(55324)
 ```
 
+## 프로덕션 운영 환경 (세션 #6 구축 — 2026-06-22)
+
+```
+Supabase 운영      : https://rtnfltwmnizkjrrgjudk.supabase.co — 통합 마이그레이션(001~010+Realtime) 적용,
+                     11테이블+RPC+009컬럼+4버킷(photos/thumbnails공개/resources/pdfs) 전부 검증 완료
+Vercel 운영        : https://sharesnap-three.vercel.app (GitHub papascompany/sharesnap, PRIVATE 연결)
+env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY/EDITOR_URL,
+                     PHOTOBOOK_PAGE_W/H_MM=210, TEMPLATE_SET_ID=photobook-210-book-4p — Vercel Production 설정됨
+실키 E2E 검증       : 매직링크 로그인 → 방생성 → 사진4장 업로드(print_path) → 포토북 세션생성 200(sessionId 발급)
+                     → canvasData=[null(표지),4×내지] 전부 https Supabase 이미지 cover-fit(scaleX 1.063) 주입 ✅
+주의             : 키는 서버전용(service_role·STORIGE_API_KEY) — 절대 NEXT_PUBLIC/git 금지. 사용자가 채팅에 붙인 키는 회전 권장.
+테스트 데이터       : room a8ed6e1d…, order 275945ec…, member_no=1, 사진 busan_1~4 (정리 시 삭제 가능)
+```
+
 ## [NEXT_ACTION] — 다음 세션에서 즉시 실행할 작업
 
 ```bash
-# 1) 작업 디렉토리: /Users/yohan/Documents/claude/Sharesnap  ← 2026-06-20 중첩 제거(단일 루트). 옛 .../Sharesnap/sharesnap 아님
-# 2) Phase 4(편집기)는 Storige 임베드 연동으로 대체됨(ADR-011) — 자체 Fabric 구현 폐기.
-#    다음은 운영 셋업: 도메인 확정 → 카카오 앱키 → Supabase 프로덕션 → Storige 시드 적용 (docs/integration-inventory.md §운영 블로커)
-# 3) Phase 3 잔여 후속(소규모, Phase 4 진입 전 처리 권장):
-#    - /rooms/[id]에서 ?welcome=1 수신 시 환영 toast 1회 (자동 입장 후 안내)
-#    - maskable 아이콘 2종(icon-192/512-maskable.png) 생성 + manifest purpose:maskable 분리 (Phase 7 TWA 전 필수)
-# 4) 검증
-npx tsc --noEmit && npm run lint && npm run build
-
-# 5) 외부 작업(코드 아님 — 운영자 진행 필요):
-#    - Supabase 프로젝트 생성, .env.local 작성 (.env.local.example 참조)
-#    - SQL Editor에서 supabase/migrations/001~008.sql 순서대로 실행 (008 = 참여 퍼널 RPC, 미적용 시 /join이 폴백 표시)
-#    - Supabase Auth → URL Configuration → Redirect URLs에 {도메인}/auth/callback?* 등록 (쿼리 글롭 필수 — next 보존)
-#    - 카카오 Developers 앱 등록 → JS 키를 NEXT_PUBLIC_KAKAO_JS_KEY로, Supabase Kakao Provider 설정
-#    - rooms.cover_url에는 public(thumbnails) 버킷 URL만 저장 (signed URL 금지 — OG 깨짐)
-#    - 실기기 E2E: 카톡 인앱 → /join 미리보기 → 카카오 로그인 → next 복귀 → 자동 입장 확인
+# 1) 작업 디렉토리: /Users/yohan/Documents/claude/Sharesnap  ← 단일 루트
+# 2) 프로덕션 배포·E2E 완료. 운영 오픈 잔여는 코드 아님(외부작업):
+#    - 카카오: Developers 앱키 → Vercel NEXT_PUBLIC_KAKAO_JS_KEY, Supabase Auth Kakao Provider 활성화
+#    - Storige Admin → Sites → ShareSnap: uploadCallbackUrl=https://sharesnap-three.vercel.app/api/storige/webhook,
+#      allowedOrigins/frameAncestors에 sharesnap-three.vercel.app 추가 (webhook 수신 + iframe CSP)
+#    - 사용자 확인: Supabase Database>Publications에 supabase_realtime이 messages/photos 포함하는지
+# 3) 그다음 Phase 5(주문/결제) 진입 — photobook_orders 결제연동 + 인화주문
+# 4) 검증(머신 한가할 때): npx tsc --noEmit && npm run lint && npm run build  (또는 Vercel 원격 빌드로 갈음)
 ```
 
 ---
@@ -191,6 +197,7 @@ npx tsc --noEmit && npm run lint && npm run build
 | 2026-06-13 | #3 | 실키 스모크 | 실제 STORIGE_API_KEY로 §5 전구간 — 세션생성(200)→편집기 로드→공유방사진 4장 주입→캔버스 배치→편집완료→compose(200)→PDF다운로드→webhook 모사→pdfs버킷+pdf_ready. 전부 통과 | ✅ | ~15m |
 | 2026-06-15 | #4 | 템플릿+자동배치 | 210×210 4P 시드 SQL 작성 + 사진 자동배치(canvasData 주입) 구현. 실측 좌표계 기반 autoLayout.ts. 실키 검증: canvas_data 덤프 정확 + https 이미지 편집기 cover-fit 렌더 증명(dev http는 Mixed Content). build 클린 | ✅ | ~35m |
 | 2026-06-20 | #5 | 감사+정리 | 외부연동 전수 감사(integration-inventory) → 폴더 중첩 제거(단일 루트) → GitHub papascompany/sharesnap 연결(PRIVATE) → 운영품질 정리(로그아웃·/me·/photobooks·/orders·welcome토스트·보안헤더4종·photos RLS강화010·maskable아이콘·.well-known·문서정합). build 클린(20 routes), push 완료 | ✅ | ~50m |
+| 2026-06-22 | #6 | 프로덕션 배포 | 실 Supabase(rtnfltwmnizkjrrgjudk)+Vercel(sharesnap-three) 운영 셋업 마무리 — 스키마/버킷/env 전수 검증, 매직링크 E2E. 포토북 502 발견→원인 STORIGE_API_URL 빈문자열 env에서 `??` 폴백 미작동→env 재설정+재배포로 200 복구(sessionId+canvasData 4×내지 https 검증). 근본수정 `?? → ||` 4곳 커밋(47a7906)+재배포. 로컬빌드는 머신 load~100로 미완, Vercel 원격빌드로 갈음 | ✅ | ~60m |
 
 ---
 
@@ -198,19 +205,19 @@ npx tsc --noEmit && npm run lint && npm run build
 
 | ID | 심각도 | 설명 | 상태 | 해결방법 |
 |----|--------|------|------|----------|
-| (없음) | | | | |
+| I-502 | 높음 | 프로덕션 /api/storige/session 502 — Vercel STORIGE_API_URL 빈 문자열 env에서 `?? DEFAULT` 폴백 미작동(빈문자열≠nullish) → apiUrl='' fetch 실패 | ✅ 해결(2026-06-22) | env 재설정+재배포로 즉시 복구. 근본수정: 동일 패턴 4곳 `?? → ||`(commit 47a7906) — 빈문자열도 폴백 |
 
 ---
 
 ## 빌드/테스트 상태
 
 ```
-TypeScript   : ✅ tsc --noEmit pass (2026-05-16, 세션 #2)
+TypeScript   : ✅ tsc --noEmit pass (세션 #5 시점). 세션 #6 변경은 `?? → ||`(타입 동일)이라 무해
 ESLint       : ✅ 0 에러 0 경고
-Build        : ✅ npm run build pass (Next.js 16.2.6 Turbopack, 11 routes)
+Build        : ✅ Vercel 원격 빌드 pass (2026-06-22, Build Completed 24s) — 로컬은 머신 load~100로 미완, 원격으로 갈음
 Unit Test    : N/A (Phase 7)
-E2E Test     : N/A (Phase 7) — 실기기 카톡 인앱 퍼널 E2E는 외부 작업 완료 후 필수
-마지막 검증  : 2026-05-16 Phase 3 완료
+E2E Test     : ✅ 프로덕션 실키 E2E (세션생성 200 + canvasData 4×내지 https 검증). 실기기 카톡 인앱 퍼널은 카카오 앱키 후
+마지막 검증  : 2026-06-22 프로덕션 배포 + 502 수정 재검증 (세션 #6)
 ```
 
 ---

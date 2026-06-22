@@ -116,6 +116,12 @@
 
 | [버그] 미들웨어가 /api/* 비로그인 요청을 /login(307)으로 redirect → 웹훅 차단 + fetch가 HTML 받음 | updateSession isPublicRoute에 `pathname.startsWith("/api")` 추가 — API는 자체 401 JSON/서명검증. session→503, webhook→401(서명) 정상 확인 | 2026-06-13 |
 
+### ADR-012 (2026-06-22): 프로덕션 배포 + 실키 E2E 검증 완료
+- **운영 인프라**: Supabase `rtnfltwmnizkjrrgjudk`(통합 마이그레이션 001~010+Realtime 적용, 11테이블+RPC+4버킷 검증) + Vercel `sharesnap-three.vercel.app`(GitHub papascompany/sharesnap PRIVATE 연결, env 12+ Production 설정). 이 두 프로젝트는 MCP 토큰 계정과 달라 대시보드/REST/CLI로 작업(`docs/production-setup.md`)
+- **실키 E2E ✅**: 매직링크 로그인 → 방생성 → 사진4장 업로드(print_path) → 포토북 세션생성 **200**(sessionId) → DB canvasData=[null(표지),4×내지] 전부 **https Supabase 이미지 cover-fit**(scaleX 1.063, templateSetId=photobook-210-book-4p). 프로덕션 https라 dev의 Mixed Content(ADR-011-v4) 없음 → 자동배치 사진 편집기 렌더 보장
+- **배포 게이트**: GitHub auto-deploy 대신 `vercel --prod` CLI 사용. 로컬 머신 과부하(load~100, 타 세션 빌드 경합) 시 로컬 `npm run build`가 굶주려 미완 → **Vercel 원격 빌드가 실 빌드 게이트**(Build Completed 24s ✅). env 변경 후 반드시 재배포해야 반영(NEXT_PUBLIC은 빌드 인라인)
+- **잔여(외부작업)**: 카카오 앱키(JS키+Provider), Storige Admin webhook(uploadCallbackUrl)·allowedOrigins에 sharesnap-three 등록
+
 ### ADR-010: 디자인 시스템 — "추억을 모아 빛나게"
 - **결정일**: 2026-05-16 (상세: docs/design-system.md — 시각 결정의 단일 소스)
 - **결정**: Primary 선셋 코랄 oklch(0.655 0.19 32) + 앰버 그라데이션, 웜 뉴트럴, 다크모드=시네마 모드(웜 니어블랙, 사진 뷰어는 순수 블랙), Pretendard Variable(dynamic-subset CDN), radius 0.75rem, 모바일 CTA h-12
@@ -189,6 +195,7 @@ Kakao.Share.sendDefault({
 | 로컬 Supabase 스택이 다른 프로젝트(MD2Books, 54321~54327)와 포트 충돌 | config.toml 포트를 55321~55324로 변경 + `[analytics] enabled=false`(54327 충돌 회피) | 2026-06-13 |
 | 카카오 키 없이 로그인 테스트 필요 | Supabase admin API `POST /auth/v1/admin/generate_link {type:magiclink}` → hashed_token을 `/auth/confirm?token_hash=...&type=signup&next=/rooms`로 브라우저 이동(신규 유저 첫 토큰 타입은 signup) | 2026-06-13 |
 | 자동화로 동적 생성 file input에 업로드 불가(pickPhotos가 input.click()로 native dialog) | `HTMLInputElement.prototype.click` 후킹으로 native dialog 차단 → input 잔류 → canvas로 File 생성 후 DataTransfer로 input.files 주입 + change dispatch (실제 업로드 파이프라인 그대로 탐) | 2026-06-13 |
+| [운영 502] 프로덕션 /api/storige/session 502 STORIGE_UPSTREAM_FAILED — Vercel `STORIGE_API_URL`이 빈 문자열("")로 들어가 `?? DEFAULT` 폴백 미작동(빈문자열은 nullish 아님)→apiUrl='' fetch 실패 | env 재설정+재배포로 즉시 복구. 근본수정: `getStorigeConfig`(API_URL/EDITOR_URL)·`getTemplateSetId`·constants `APP_URL` 4곳 `?? → ||`(빈문자열도 폴백). commit 47a7906 | 2026-06-22 |
 
 ---
 
