@@ -59,7 +59,7 @@ Supabase 대시보드(`rtnfltwmnizkjrrgjudk`) → **SQL Editor** → `docs/produ
 | `NEXT_PUBLIC_STORIGE_EDITOR_URL` | `https://editor.papascompany.co.kr` | |
 | `STORIGE_PHOTOBOOK_PAGE_W_MM` | `210` | 자동배치 판형(상품 정사각). 미설정 시 기본 210 |
 | `STORIGE_PHOTOBOOK_PAGE_H_MM` | `210` | 〃 |
-| `STORIGE_TEMPLATE_SET_ID` | `2f312032-e3d2-4623-8013-231ce1984400` | ✅ 실제 등록된 셋 "sharesnap basic 210 H/C"(210 하드커버, 표지 spread 458×238, canAddPage). **시드 슬러그 `photobook-210-book-4p`는 미적용이니 쓰지 말 것** — 미설정 시 dev 폴백 `a2cc2939…`(A4)는 유효하나 판형 불일치 |
+| `STORIGE_TEMPLATE_SET_ID` | `sharesnap-210sq-book` | ✅ 완전한 book-mode 셋 "ShareSnap 210x210 포토북"(표지 spread 422×210 + 내지 page 210×210). **반드시 표지+내지(page) 템플릿을 모두 갖춘 셋**이라야 편집기에 내지가 보인다. 쓰면 안 되는 것: 슬러그 `photobook-210-book-4p`(미존재→404), `2f312032`(표지만 있어 내지 0). 미설정 시 dev 폴백 `a2cc2939…`(A4, 판형 불일치) |
 | `NEXT_PUBLIC_KAKAO_JS_KEY` | (Step 6 카카오 JS 키) | 미설정 시 카카오 공유 버튼만 비활성(앱은 정상) |
 | `KAKAO_REST_API_KEY` | (선택) | |
 
@@ -78,7 +78,7 @@ Supabase 대시보드(`rtnfltwmnizkjrrgjudk`) → **SQL Editor** → `docs/produ
 
 ## Step 7. Storige (운영자 작업)
 
-1. **실 포토북 templateSet** — ✅ **이미 등록 완료**: Storige Admin에 "sharesnap basic 210 H/C" 셋이 등록됨(id `2f312032-e3d2-4623-8013-231ce1984400`, 2026-06-22). Vercel `STORIGE_TEMPLATE_SET_ID`에 이 UUID를 설정(완료). ⚠ `docs/storige-seed-210x210-photobook.sql`의 슬러그 `photobook-210-book-4p`는 **적용하지 않았으므로 env에 넣으면 편집기 404**(템플릿셋 조회 실패) — 슬러그 대신 위 UUID 사용. Admin에서 추가 판형 등록 시 발급 UUID를 env에 넣으면 됨.
+1. **실 포토북 templateSet** — ✅ **완료**: Storige DB에 완전한 셋 `sharesnap-210sq-book`("ShareSnap 210x210 포토북")이 등록됨(2026-06-22, known-good `sample-8x8-book-24p` 구조를 210×210으로 복제). 구성: `editor_mode=book`, 셋 210×210, **표지 spread(`sharesnap-210sq-cover` 422×210) + 내지 page(`sharesnap-210sq-page` 210×210)**. Vercel `STORIGE_TEMPLATE_SET_ID=sharesnap-210sq-book`(완료). ⚠ **핵심 규칙: templateSet은 표지(cover/spread)뿐 아니라 내지(page) 템플릿이 반드시 1개 이상 있어야 편집기에 내지가 보인다.** 표지만 있는 셋(예: 초기 `2f312032`)이나 미존재 슬러그(`photobook-210-book-4p`)는 각각 "내지 안 보임"·"404"를 유발. 추가 판형 등록 시에도 표지+내지 page를 함께 등록할 것.
 2. **Storige Admin → Sites → ShareSnap**:
    - `uploadCallbackUrl` = `https://sharesnap-three.vercel.app/api/storige/webhook` (합성완료 webhook 수신)
    - `allowedOrigins`/`frameAncestors`에 `https://sharesnap-three.vercel.app` 추가(CORS·iframe CSP)

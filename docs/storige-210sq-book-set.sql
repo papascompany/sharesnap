@@ -1,0 +1,26 @@
+-- ShareSnap 210x210 정사각 하드커버 책 셋 (8x8 known-good 복제). 추가 전용(INSERT). 되돌리기: DELETE 3건 + env 원복.
+START TRANSACTION;
+INSERT INTO templates (id,name,type,width,height,editable,deleteable,canvas_data,spread_config,is_deleted,is_active,created_at,updated_at)
+VALUES ('sharesnap-210sq-page','ShareSnap 210 내지','page',210.0,210.0,1,1,'{"version": "5.5.2", "width": 210.0, "height": 210.0, "objects": [{"type": "rect", "version": "5.5.2", "originX": "center", "originY": "center", "left": 0, "top": 0, "width": 1257.874, "height": 1257.874, "fill": "#fff", "stroke": null, "strokeWidth": 1, "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0, "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4, "scaleX": 1, "scaleY": 1, "angle": 0, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "rx": 0, "ry": 0, "id": "workspace", "selectable": false, "evented": true}], "clipPath": {"type": "rect", "version": "5.5.2", "originX": "center", "originY": "center", "left": 0, "top": 0, "width": 1257.874, "height": 1257.874, "fill": "#fff", "stroke": null, "strokeWidth": 1, "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0, "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4, "scaleX": 1, "scaleY": 1, "angle": 0, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "rx": 0, "ry": 0, "id": "workspace", "selectable": false, "evented": true}}',NULL,0,1,NOW(),NOW());
+INSERT INTO templates (id,name,type,width,height,editable,deleteable,canvas_data,spread_config,is_deleted,is_active,created_at,updated_at)
+VALUES ('sharesnap-210sq-cover','ShareSnap 210 표지(스프레드)','spread',421.7,210.0,1,0,'{"version": "5.5.2", "width": 421.7, "height": 210.0, "objects": [{"type": "rect", "version": "5.5.2", "originX": "center", "originY": "center", "left": 0, "top": 0, "width": 2508.0709, "height": 1257.874, "fill": "#fff", "stroke": null, "strokeWidth": 1, "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0, "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4, "scaleX": 1, "scaleY": 1, "angle": 0, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "rx": 0, "ry": 0, "id": "workspace", "selectable": false, "evented": true}], "clipPath": {"type": "rect", "version": "5.5.2", "originX": "center", "originY": "center", "left": 0, "top": 0, "width": 2508.0709, "height": 1257.874, "fill": "#fff", "stroke": null, "strokeWidth": 1, "strokeDashArray": null, "strokeLineCap": "butt", "strokeDashOffset": 0, "strokeLineJoin": "miter", "strokeUniform": false, "strokeMiterLimit": 4, "scaleX": 1, "scaleY": 1, "angle": 0, "flipX": false, "flipY": false, "opacity": 1, "shadow": null, "visible": true, "backgroundColor": "", "fillRule": "nonzero", "paintFirst": "fill", "globalCompositeOperation": "source-over", "skewX": 0, "skewY": 0, "rx": 0, "ry": 0, "id": "workspace", "selectable": false, "evented": true}}','{"version": 1, "spec": {"coverWidthMm": 210.0, "coverHeightMm": 210.0, "spineWidthMm": 1.7, "wingEnabled": false, "wingWidthMm": 0, "cutSizeMm": 3, "safeSizeMm": 3, "dpi": 150}, "regions": [], "totalWidthMm": 421.7, "totalHeightMm": 210.0}',0,1,NOW(),NOW());
+INSERT INTO template_sets (id,name,type,width,height,can_add_page,page_count_range,templates,editor_mode,is_deleted,is_active,cover_editable,content_pdf_editable,pdf_output_mode,color_mode,bleed_mm,crop_mark_enabled,size_tolerance_mm,created_at,updated_at)
+VALUES ('sharesnap-210sq-book','ShareSnap 210x210 포토북','book',210.0,210.0,1,'[4, 100]','[{"templateId": "sharesnap-210sq-cover", "required": true}, {"templateId": "sharesnap-210sq-page", "required": false}]','book',0,1,1,1,'duplex-merged','rgb',3,0,0.2,NOW(),NOW());
+COMMIT;
+
+-- ============================================================
+-- 적용 이력: 2026-06-22 프로덕션 Storige DB(api.papascompany.co.kr / storige-mariadb)에 적용 완료.
+--   적용 경로: ssh deploy@158.247.235.202 'source ~/storige/.env && docker exec -i storige-mariadb mariadb -ustorige -p"$DATABASE_PASSWORD" storige' < 이 파일
+--   배경: 운영자 셋 2f312032(sharesnap basic 210 H/C)는 표지(cover)만 있어 편집기에 내지가 안 보였음.
+--         known-good 정사각책 sample-8x8-book-24p 구조(editor_mode=book, 표지 spread + 내지 page)를 210×210으로 복제.
+--   ShareSnap 연결: Vercel env STORIGE_TEMPLATE_SET_ID=sharesnap-210sq-book (코드 변경 없음).
+--
+-- 롤백(필요 시):
+--   DELETE FROM template_sets WHERE id='sharesnap-210sq-book';
+--   DELETE FROM templates    WHERE id IN ('sharesnap-210sq-cover','sharesnap-210sq-page');
+--   그리고 Vercel env STORIGE_TEMPLATE_SET_ID 를 다른 유효 셋으로 원복.
+--
+-- TODO(운영자 후속, 선택):
+--   - 표지 spread는 현재 빈 흰 배경 — Storige Admin에서 표지 디자인/하드커버 wrap(현 spine 1.7mm) 보강 가능.
+--   - color_mode 현재 rgb(8×8 known-good 동일). 인쇄 정밀도 위해 cmyk 전환 검토.
+--   - ShareSnap autoLayout BLEED_MM*2(+6mm)와 셋 워크스페이스(+3mm) 관례 차이 → cover-fit 오버스캔으로 흡수되나 추후 정렬 검토.
