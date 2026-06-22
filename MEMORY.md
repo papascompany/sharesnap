@@ -118,7 +118,8 @@
 
 ### ADR-012 (2026-06-22): 프로덕션 배포 + 실키 E2E 검증 완료
 - **운영 인프라**: Supabase `rtnfltwmnizkjrrgjudk`(통합 마이그레이션 001~010+Realtime 적용, 11테이블+RPC+4버킷 검증) + Vercel `sharesnap-three.vercel.app`(GitHub papascompany/sharesnap PRIVATE 연결, env 12+ Production 설정). 이 두 프로젝트는 MCP 토큰 계정과 달라 대시보드/REST/CLI로 작업(`docs/production-setup.md`)
-- **실키 E2E ✅**: 매직링크 로그인 → 방생성 → 사진4장 업로드(print_path) → 포토북 세션생성 **200**(sessionId) → DB canvasData=[null(표지),4×내지] 전부 **https Supabase 이미지 cover-fit**(scaleX 1.063, templateSetId=photobook-210-book-4p). 프로덕션 https라 dev의 Mixed Content(ADR-011-v4) 없음 → 자동배치 사진 편집기 렌더 보장
+- **실키 E2E**: 매직링크 로그인 → 방생성 → 사진4장 업로드(print_path) → 포토북 세션생성 **200**(sessionId) → DB canvasData=[null(표지),4×내지] 전부 **https Supabase 이미지 cover-fit**(scaleX 1.063). 프로덕션 https라 dev의 Mixed Content(ADR-011-v4) 없음.
+  - ⚠ **정정**: 이 시점 검증은 세션생성+canvasData까지만 봤고 편집기 화면을 못 봤다(스크린샷 CDP 프리즈). templateSetId가 미존재 슬러그(photobook-210-book-4p)라 실제 편집기는 404였음 → I-404 참조. **올바른 운영 셋 = `2f312032…`(sharesnap basic 210 H/C)**. 교체+재배포 후 편집기 editor.ready 로드(404 없음) 확인 완료
 - **배포 게이트**: GitHub auto-deploy 대신 `vercel --prod` CLI 사용. 로컬 머신 과부하(load~100, 타 세션 빌드 경합) 시 로컬 `npm run build`가 굶주려 미완 → **Vercel 원격 빌드가 실 빌드 게이트**(Build Completed 24s ✅). env 변경 후 반드시 재배포해야 반영(NEXT_PUBLIC은 빌드 인라인)
 - **잔여(외부작업)**: 카카오 앱키(JS키+Provider), Storige Admin webhook(uploadCallbackUrl)·allowedOrigins에 sharesnap-three 등록
 
@@ -196,6 +197,7 @@ Kakao.Share.sendDefault({
 | 카카오 키 없이 로그인 테스트 필요 | Supabase admin API `POST /auth/v1/admin/generate_link {type:magiclink}` → hashed_token을 `/auth/confirm?token_hash=...&type=signup&next=/rooms`로 브라우저 이동(신규 유저 첫 토큰 타입은 signup) | 2026-06-13 |
 | 자동화로 동적 생성 file input에 업로드 불가(pickPhotos가 input.click()로 native dialog) | `HTMLInputElement.prototype.click` 후킹으로 native dialog 차단 → input 잔류 → canvas로 File 생성 후 DataTransfer로 input.files 주입 + change dispatch (실제 업로드 파이프라인 그대로 탐) | 2026-06-13 |
 | [운영 502] 프로덕션 /api/storige/session 502 STORIGE_UPSTREAM_FAILED — Vercel `STORIGE_API_URL`이 빈 문자열("")로 들어가 `?? DEFAULT` 폴백 미작동(빈문자열은 nullish 아님)→apiUrl='' fetch 실패 | env 재설정+재배포로 즉시 복구. 근본수정: `getStorigeConfig`(API_URL/EDITOR_URL)·`getTemplateSetId`·constants `APP_URL` 4곳 `?? → ||`(빈문자열도 폴백). commit 47a7906 | 2026-06-22 |
+| [운영 404] 편집기 "편집기를 열지 못했어요 — 템플릿셋을 불러올 수 없습니다(photobook-210-book-4p) 404". env `STORIGE_TEMPLATE_SET_ID`가 **Storige DB에 미존재하는 시드 슬러그**를 가리킴(시드 SQL은 적용된 적 없음). **createEditSession은 templateSetId 존재를 검증하지 않고 문자열만 저장** → 세션생성 201이 나도 편집기가 `/template-sets/{id}/with-templates` 호출 시 404 | 실재 셋 목록(`GET /template-sets`)에서 "sharesnap basic 210 H/C"(`2f312032-e3d2-4623-8013-231ce1984400`, type=book, 표지 spread 458×238, canAddPage, pageCountRange[10,100]) 발견. Vercel env를 이 UUID로 교체+재배포. 깨진 ID 저장된 기존 세션 `storige_session_id=NULL`로 무효화(재사용 분기 회피). **교훈: 세션생성 201 ≠ 편집기 로드 가능. 반드시 `/template-sets/{id}/with-templates`=200 확인.** autoLayout canvasData는 실재 셋과 그대로 호환(표지 null 보존+내지 https 이미지 cover-fit 201 실측) | 2026-06-22 |
 
 ---
 

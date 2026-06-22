@@ -1,5 +1,9 @@
 # Storige 하드커버 포토북 템플릿셋 등록 가이드
 
+> ✅ **[2026-06-22 상태 업데이트] 등록 완료 — 이 가이드의 시드 슬러그는 사용하지 않음.**
+> Storige Admin에 실제 셋이 등록됐다: **id `2f312032-e3d2-4623-8013-231ce1984400`, name "sharesnap basic 210 H/C"**(type=book, 표지 spread 458×238, canAddPage, pageCountRange[10,100]). Vercel `STORIGE_TEMPLATE_SET_ID`에는 이 **UUID**를 설정한다.
+> ⚠️ 본문/시드 SQL의 슬러그 `photobook-210-book-4p`는 **Storige DB에 적용된 적이 없다** → env에 넣으면 편집기가 `/template-sets/photobook-210-book-4p/with-templates` 404로 "편집기를 열지 못했어요"를 띄운다. 슬러그 대신 위 UUID를 쓸 것. 아래 시드 SQL은 "추가 판형을 직접 SQL로 심을 때"의 참고용으로만 남겨둔다.
+
 > 대상: **Storige 운영자(= 프로젝트 오너, 같은 회사)** — Storige Admin에서 ShareSnap 포토북용 템플릿셋을 등록하는 실행 가이드
 > 작성 기준: ShareSnap `src/modules/photobook/services/storigeServer.ts` + Storige 레포(`/Users/yohan/claude/Bookmoa Storige editor/storige`) 실제 코드
 > ⚠️ 이 문서에는 **API 키·시크릿 값을 절대 포함하지 않는다.** 키는 서버 환경변수/Vercel env에만 보관한다.
