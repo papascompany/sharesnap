@@ -41,10 +41,11 @@ export function getStorigeConfig(): StorigeConfig | null {
   if (!apiKey) return null;
 
   return {
-    apiUrl: (process.env.STORIGE_API_URL ?? DEFAULT_API_URL).replace(/\/+$/, ""),
+    // NOTE: ?? 대신 || — Vercel env가 빈 문자열("")이어도 기본값으로 폴백(빈문자열은 nullish가 아니라 ??가 안 먹어 502 유발 이력)
+    apiUrl: (process.env.STORIGE_API_URL || DEFAULT_API_URL).replace(/\/+$/, ""),
     apiKey,
     editorUrl: (
-      process.env.NEXT_PUBLIC_STORIGE_EDITOR_URL ?? DEFAULT_EDITOR_URL
+      process.env.NEXT_PUBLIC_STORIGE_EDITOR_URL || DEFAULT_EDITOR_URL
     ).replace(/\/+$/, ""),
   };
 }
@@ -228,7 +229,8 @@ export async function patchEditSessionPhotos(
  * 운영에서는 env STORIGE_TEMPLATE_SET_ID로 오버라이드, 미설정 시 dev 기본값.
  */
 export function getTemplateSetId(): string {
-  return process.env.STORIGE_TEMPLATE_SET_ID ?? STORIGE_DEV_TEMPLATE_SET_ID;
+  // || — 빈 문자열 env도 dev 기본값으로 폴백(빈 templateSetId 전송 방지)
+  return process.env.STORIGE_TEMPLATE_SET_ID || STORIGE_DEV_TEMPLATE_SET_ID;
 }
 
 /**
