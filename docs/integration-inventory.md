@@ -1,7 +1,7 @@
 # ShareSnap 외부 연동 인벤토리 (Integration Inventory)
 
 > **작성 기준**: 6개 도메인 에이전트의 코드 전수 조사 결과 종합 + 핵심 사실 직접 재검증(읽기 전용).
-> **범위**: `/Users/yohan/Documents/claude/Sharesnap/sharesnap` (Next.js 16 App Router + Turbopack + proxy 컨벤션 / React 19 / Supabase / Storige 임베드 / 카카오 / PWA).
+> **범위**: `/Users/yohan/Developer/claude/Sharesnap` (정본, 2026-06-23 확정 · Next.js 16 App Router + Turbopack + proxy 컨벤션 / React 19 / Supabase / Storige 임베드 / 카카오 / PWA).
 > **상태 표기**: ✅ 완료(코드+동작 검증) · ⚠️ 부분(코드 완료, 운영 설정/실 E2E 미검증 또는 dev 한정) · ❌ 미설정·계획.
 > **원칙**: 모든 항목은 코드 근거(파일:라인) 기반. 시크릿 값은 본문에 절대 포함하지 않음.
 

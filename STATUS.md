@@ -43,7 +43,7 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 ## [NEXT_ACTION] — 다음 세션에서 즉시 실행할 작업
 
 ```bash
-# 1) 작업 디렉토리: /Users/yohan/Documents/claude/Sharesnap  ← 단일 루트
+# 1) 작업 디렉토리: /Users/yohan/Developer/claude/Sharesnap  ← 정본(2026-06-23 확정). 옛 Documents/claude/Sharesnap 중복 클론은 삭제됨
 # 2) 프로덕션 배포·E2E 완료. 운영 오픈 잔여는 코드 아님(외부작업):
 #    - 카카오: Developers 앱키 → Vercel NEXT_PUBLIC_KAKAO_JS_KEY, Supabase Auth Kakao Provider 활성화
 #    - Storige Admin → Sites → ShareSnap: uploadCallbackUrl=https://sharesnap-three.vercel.app/api/storige/webhook,
