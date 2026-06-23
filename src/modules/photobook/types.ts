@@ -38,6 +38,19 @@ export interface PhotobookOrder {
   storigeSessionId: string | null;
   coverFileId: string | null;
   contentFileId: string | null;
+  /** 합성 완료 PDF 경로(pdfs 버킷). pdf_ready 이후 채워짐 */
+  pdfPath: string | null;
+  /** 미리보기 이미지 경로(있으면) */
+  previewPath: string | null;
+  /** 확정 금액(원). 주문/결제 단계 전에는 null → 예상가 계산으로 대체 표시 */
+  totalPrice: number | null;
+  /** 주문 수량 (기본 1) */
+  quantity: number;
   createdAt: string;
   updatedAt: string;
+}
+
+/** 목록 표시용 — 방 이름을 곁들인 주문 항목 */
+export interface PhotobookOrderListItem extends PhotobookOrder {
+  roomName: string | null;
 }

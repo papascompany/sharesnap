@@ -10,9 +10,11 @@ import type { StorigeEditorResult } from "@/modules/editor/types";
 import type {
   BookSize,
   PhotobookOrder,
+  PhotobookOrderListItem,
   PhotobookOrderRow,
   PhotobookOrderStorigeColumns,
 } from "@/modules/photobook/types";
+import type { PhotobookStatus } from "@/modules/shared/types/global";
 
 type PhotobookOrderUpdate =
   Database["public"]["Tables"]["photobook_orders"]["Update"];
@@ -32,6 +34,10 @@ function mapOrder(
     storigeSessionId: row.storige_session_id ?? null,
     coverFileId: row.cover_file_id ?? null,
     contentFileId: row.content_file_id ?? null,
+    pdfPath: row.pdf_path ?? null,
+    previewPath: row.preview_path ?? null,
+    totalPrice: row.total_price ?? null,
+    quantity: row.quantity ?? 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -102,6 +108,75 @@ export async function saveEditorResult(
   const { data, error } = await supabase
     .from("photobook_orders")
     .update(patch as PhotobookOrderUpdate)
+    .eq("id", orderId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return mapOrder(data);
+}
+
+/**
+ * 내 포토북 주문 전체 조회(최신순) + 방 이름 첨부.
+ * 방 이름은 임베디드 select 불가(database.ts Relationships 빈 배열)라 2단계 쿼리로 합친다.
+ */
+export async function getMyPhotobookOrders(): Promise<PhotobookOrderListItem[]> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("로그인이 필요합니다.");
+
+  const { data: orders, error } = await supabase
+    .from("photobook_orders")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  if (!orders || orders.length === 0) return [];
+
+  // 방 이름 일괄 조회 (RLS상 멤버인 방만 반환 — 없으면 null 폴백)
+  const roomIds = [...new Set(orders.map((o) => o.room_id))];
+  const { data: rooms } = await supabase
+    .from("rooms")
+    .select("id, name")
+    .in("id", roomIds);
+  const nameById = new Map((rooms ?? []).map((r) => [r.id, r.name]));
+
+  return orders.map((row) => ({
+    ...mapOrder(row),
+    roomName: nameById.get(row.room_id) ?? null,
+  }));
+}
+
+/** 내 포토북 주문 단건 조회(본인 소유). 없으면 null. */
+export async function getPhotobookOrderById(
+  orderId: string,
+): Promise<PhotobookOrder | null> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("로그인이 필요합니다.");
+
+  const { data, error } = await supabase
+    .from("photobook_orders")
+    .select("*")
+    .eq("id", orderId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapOrder(data) : null;
+}
+
+/** 포토북 주문 상태 갱신(본인 소유). 결제·주문 단계에서 사용. */
+export async function updatePhotobookOrderStatus(
+  orderId: string,
+  status: PhotobookStatus,
+): Promise<PhotobookOrder> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("photobook_orders")
+    .update({ status } as PhotobookOrderUpdate)
     .eq("id", orderId)
     .select("*")
     .single();
