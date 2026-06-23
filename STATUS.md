@@ -52,13 +52,13 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 #       (Vercel 함수 로그) → photobook_orders.status=pdf_ready + pdfs 버킷 PDF 확인
 #   A3. 새 셋(sharesnap-210sq-book, spread 모드) compose 출력 형식 실측:
 #       webhook payload(outputFiles type=cover/content/set, setIndex) 덤프 → 표지 spread+내지 합성 정합 확인
-#   A4. (코드) pdf_ready 후 PDF 미리보기/다운로드 라우트 신설 — 현재 pdf_path 저장만 되고 읽는 화면 없음
+#   A4. ✅ 완료(a8c0019) PDF 미리보기/다운로드 라우트 GET /api/photobook/orders/[id]/pdf (signed URL 리다이렉트)
 #
-# [트랙 B] Phase 5/6 상업화 레이어 (미착수 — 큰 작업)
-#   B1. 가격정책: PHOTOBOOK_PRICES / PRINT_PRICES 상수 + calculate*Price()
-#   B2. 포토북 주문: photobookService 조회/상태 확장 + /photobooks·/orders 실장(현재 stub) + API 라우트
-#   B3. 인화주문(M7): src/modules/print-order/services 신규(현재 빈 폴더) + 사진선택·체크아웃 UI
-#   B4. 결제 PG: 토스페이먼츠 등 선택 → paymentService(init/confirm) + 결제위젯 + payment webhook + ordered→paid 전이
+# [트랙 B] Phase 5/6 상업화 레이어
+#   B1. ✅ 완료(a8c0019) 가격정책: PHOTOBOOK_PRICES(⚠placeholder, 운영자 정가 확정 필요) + calculatePhotobookPrice/formatKRW
+#   B2. ✅ 완료(a8c0019, 포토북分) photobookService 조회/상태 확장 + /photobooks·/orders 실장 + PhotobookList/훅. (남음: 주문 생성 API·상세페이지)
+#   B3. 인화주문(M7): src/modules/print-order/services 신규(현재 빈 폴더) + 사진선택·체크아웃 UI + PRINT_PRICES
+#   B4. 결제 PG: 토스페이먼츠 등 선택 → paymentService(init/confirm) + 결제위젯 + payment webhook + ordered→paid 전이 + 체크아웃(/photobooks/[id]/checkout)
 #   B5. 배송지: ShippingAddressForm(Daum 우편번호) + shipping_addresses 저장
 #   B6. 관리자(M9): src/modules/admin 신규(현재 빈 폴더) + 주문 대시보드 + 리소스 CRUD + /admin 가드
 #
@@ -215,6 +215,7 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 | 2026-06-22 | #6 | 편집기 404 수정 | 사용자 실테스트로 편집기 "템플릿셋 조회 404(photobook-210-book-4p)" 발견 — env가 미적용 시드 슬러그를 가리킴(Storige에 미존재). 실재 셋 목록 조회→"sharesnap basic 210 H/C"(2f312032, 오늘 등록) 발견. autoLayout canvasData가 실재 셋과 호환됨을 실측(201, 표지 null 보존+내지 https 이미지). env를 UUID로 교체+재배포, 깨진 세션 2건 무효화. 편집기 editor.ready 로드(404 없음) E2E 확인. 문서 슬러그 정정 | ✅ | ~40m |
 | 2026-06-22 | #6 | 편집기 내지 표시 수정 | "표지만 있고 내지 안 보임" 진단 — Storige 편집기 코드(useEditorContents/embed) 정밀 분석(Explore+직접read): 페이지는 셋의 templates로만 생성, 내지 복제는 기존 page 템플릿 필수(:1029). 셋 2f312032는 cover만+single@458×238 오설정이 원인(ShareSnap은 이미 정상, pageCount=canvasData길이-1 정확 도출). known-good 8×8 정사각책 구조를 210×210으로 복제한 **완전한 새 셋 sharesnap-210sq-book(표지 spread+내지 page)** DB INSERT(SSH+docker mariadb, 추가전용). env 전환+재배포+세션무효화. 편집기 표지+내지4+사진 cover-fit E2E 캡처 검증 | ✅ | ~90m |
 | 2026-06-23 | #7 | 정본정리+전수감사 | 정본 경로를 /Users/yohan/Developer/claude/Sharesnap로 확정(중복 Documents 클론 삭제, 유실0). GitHub 연결·마지막 배포 Ready 실측. 코드베이스 전수 감사(Explore 3트랙): 편집후 파이프라인(compose→webhook→PDF)=코드완성·prod미검증, Phase5/6(주문·결제·인화·관리자)=~10%·대부분 stub/미구현. STATUS 헤더(502 시점에 정체)·NEXT_ACTION 정정 | ✅ | ~40m |
+| 2026-06-23 | #7 | 트랙B-1 구현 | 편집기 이후 "주문 화면+가격" 슬라이스(외부의존0, ShareSnap 코드만): 가격정책(pricing.ts placeholder)+상태유틸, photobookService 조회/상태 확장, /photobooks·/orders stub→실장(PhotobookList+훅, 상태배지·예상가·편집이어서/PDF보기), PDF signed-URL 라우트. tsc0/lint0, Vercel 배포 Ready, 라이브 라우트 307/401 정상(commit a8c0019) | ✅ | ~50m |
 
 ---
 
