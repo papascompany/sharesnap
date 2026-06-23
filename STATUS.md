@@ -6,13 +6,12 @@
 ## 현재 상태
 
 ```
-CURRENT_PHASE    : 프로덕션 배포 + 실프로덕션 E2E 검증 (Supabase rtnfltwmnizkjrrgjudk + Vercel sharesnap-three)
-CURRENT_TASK     : 운영 오픈 잔여 외부작업(카카오 앱키, Storige webhook allowlist) + Phase 5(주문 결제) 진입
-PROGRESS         : Phase 1+2+3+4(Storige)+프로덕션배포 완료 / 전체 ~60%
-LAST_SESSION     : 2026-06-22 (세션 #6, 프로덕션 배포·502 근본수정·실키 E2E)
-LAST_ACTION      : 프로덕션(sharesnap-three.vercel.app)에 실 Supabase/Storige 연결 후 E2E — 사진4장 업로드→포토북 세션생성 502 발견. 원인=Vercel STORIGE_API_URL 빈 문자열 env에서 `?? DEFAULT` 폴백 미작동. env 재설정+재배포로 200 복구 확인(sessionId 발급, canvasData=[null,4×내지] 전부 https 이미지 cover-fit, templateSetId=photobook-210-book-4p). 코드 근본수정: 동일 패턴 4곳 `?? → ||`(commit 47a7906).
-BUILD_STATUS     : ✅ 로컬 빌드는 머신 과부하(load~100)로 미완 → Vercel 원격 빌드가 실 게이트. 변경은 타입동일(?? → ||)이라 빌드 무해.
-BLOCKED_BY       : 운영 오픈 전 외부작업 — 카카오 앱키(NEXT_PUBLIC_KAKAO_JS_KEY·Provider) + Storige Admin에 sharesnap-three.vercel.app webhook(uploadCallbackUrl)·allowedOrigins 등록. 사용자 확인대기: Realtime publication(messages/photos).
+CURRENT_PHASE    : Phase 4(M5 편집기) 프로덕션 완성·E2E 검증 완료 → 다음: ① 포토북 파이프라인 prod 마감(compose→PDF→pdf_ready) ② Phase 5/6(주문·결제·인화·관리자)
+PROGRESS         : Phase 1+2+3 완료 + 포토북 편집기(Storige) prod E2E 완성 / 전체 ~60% (상업화 레이어 Phase 5/6는 ~10%)
+LAST_SESSION     : 2026-06-23 (세션 #7, 정본경로 정리 + 코드베이스 전수 감사)
+LAST_ACTION      : (세션#6 후속) 편집기 "표지만 보이고 내지 안 보임" 수정 — env가 가리킨 셋(2f312032)이 표지만 있고 내지 page 템플릿 없음이 원인. known-good 8×8책 구조를 210×210으로 복제한 완전한 새 셋 sharesnap-210sq-book(표지 spread+내지 page) Storige DB INSERT, env 전환+재배포. 편집기 표지+내지4+자동배치 사진 cover-fit E2E 캡처 검증(commit f13d49a). 이후 정본경로를 Developer/claude/Sharesnap로 확정+중복클론 삭제(8b16b30). GitHub·배포 Ready 확인.
+BUILD_STATUS     : ✅ Vercel 원격 빌드 pass (마지막 배포 ● Ready, 라이브 헬스 login200/api401/home307). 로컬 빌드는 머신 부하 시 Vercel 원격으로 갈음.
+BLOCKED_BY       : ① 편집후 파이프라인(compose→webhook→PDF) 코드는 완성이나 prod 실검증 미완 — Storige Admin에 webhook uploadCallbackUrl allowlist 등록 필요(외부) + 실 compose 1건 덤프로 spread 출력(cover/content) 확인. ② 카카오 앱키(NEXT_PUBLIC_KAKAO_JS_KEY·Provider). ③ 사용자 확인대기: Realtime publication(messages/photos). ④ Phase 5/6(결제 PG·체크아웃·가격정책·인화·관리자)는 미착수.
 ```
 
 ## 로컬 테스트 환경 (세션 #3 구축)
@@ -43,14 +42,28 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 ## [NEXT_ACTION] — 다음 세션에서 즉시 실행할 작업
 
 ```bash
-# 1) 작업 디렉토리: /Users/yohan/Developer/claude/Sharesnap  ← 정본(2026-06-23 확정). 옛 Documents/claude/Sharesnap 중복 클론은 삭제됨
-# 2) 프로덕션 배포·E2E 완료. 운영 오픈 잔여는 코드 아님(외부작업):
-#    - 카카오: Developers 앱키 → Vercel NEXT_PUBLIC_KAKAO_JS_KEY, Supabase Auth Kakao Provider 활성화
-#    - Storige Admin → Sites → ShareSnap: uploadCallbackUrl=https://sharesnap-three.vercel.app/api/storige/webhook,
-#      allowedOrigins/frameAncestors에 sharesnap-three.vercel.app 추가 (webhook 수신 + iframe CSP)
-#    - 사용자 확인: Supabase Database>Publications에 supabase_realtime이 messages/photos 포함하는지
-# 3) 그다음 Phase 5(주문/결제) 진입 — photobook_orders 결제연동 + 인화주문
-# 4) 검증(머신 한가할 때): npx tsc --noEmit && npm run lint && npm run build  (또는 Vercel 원격 빌드로 갈음)
+# 작업 디렉토리: /Users/yohan/Developer/claude/Sharesnap  ← 정본(2026-06-23). 옛 Documents 클론 삭제됨
+#
+# [트랙 A] 포토북 파이프라인 prod 마감 (편집기는 완성 — 그 다음 단계 실검증)  ★최우선
+#   A1. (외부·운영자) Storige Admin → Sites → ShareSnap:
+#       - uploadCallbackUrl = https://sharesnap-three.vercel.app/api/storige/webhook
+#       - allowedOrigins / frameAncestors 에 sharesnap-three.vercel.app 추가
+#   A2. prod에서 편집완료 → /api/storige/compose 1건 실행 → webhook 수신 로그 확인
+#       (Vercel 함수 로그) → photobook_orders.status=pdf_ready + pdfs 버킷 PDF 확인
+#   A3. 새 셋(sharesnap-210sq-book, spread 모드) compose 출력 형식 실측:
+#       webhook payload(outputFiles type=cover/content/set, setIndex) 덤프 → 표지 spread+내지 합성 정합 확인
+#   A4. (코드) pdf_ready 후 PDF 미리보기/다운로드 라우트 신설 — 현재 pdf_path 저장만 되고 읽는 화면 없음
+#
+# [트랙 B] Phase 5/6 상업화 레이어 (미착수 — 큰 작업)
+#   B1. 가격정책: PHOTOBOOK_PRICES / PRINT_PRICES 상수 + calculate*Price()
+#   B2. 포토북 주문: photobookService 조회/상태 확장 + /photobooks·/orders 실장(현재 stub) + API 라우트
+#   B3. 인화주문(M7): src/modules/print-order/services 신규(현재 빈 폴더) + 사진선택·체크아웃 UI
+#   B4. 결제 PG: 토스페이먼츠 등 선택 → paymentService(init/confirm) + 결제위젯 + payment webhook + ordered→paid 전이
+#   B5. 배송지: ShippingAddressForm(Daum 우편번호) + shipping_addresses 저장
+#   B6. 관리자(M9): src/modules/admin 신규(현재 빈 폴더) + 주문 대시보드 + 리소스 CRUD + /admin 가드
+#
+# [외부 잔여] 카카오 앱키(NEXT_PUBLIC_KAKAO_JS_KEY + Supabase Auth Kakao Provider) / Realtime publication(messages·photos) 확인
+# [검증] npx tsc --noEmit && npm run lint && npm run build (또는 Vercel 원격 빌드)
 ```
 
 ---
@@ -201,6 +214,7 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 | 2026-06-22 | #6 | 프로덕션 배포 | 실 Supabase(rtnfltwmnizkjrrgjudk)+Vercel(sharesnap-three) 운영 셋업 마무리 — 스키마/버킷/env 전수 검증, 매직링크 E2E. 포토북 502 발견→원인 STORIGE_API_URL 빈문자열 env에서 `??` 폴백 미작동→env 재설정+재배포로 200 복구(sessionId+canvasData 4×내지 https 검증). 근본수정 `?? → ||` 4곳 커밋(47a7906)+재배포. 로컬빌드는 머신 load~100로 미완, Vercel 원격빌드로 갈음 | ✅ | ~60m |
 | 2026-06-22 | #6 | 편집기 404 수정 | 사용자 실테스트로 편집기 "템플릿셋 조회 404(photobook-210-book-4p)" 발견 — env가 미적용 시드 슬러그를 가리킴(Storige에 미존재). 실재 셋 목록 조회→"sharesnap basic 210 H/C"(2f312032, 오늘 등록) 발견. autoLayout canvasData가 실재 셋과 호환됨을 실측(201, 표지 null 보존+내지 https 이미지). env를 UUID로 교체+재배포, 깨진 세션 2건 무효화. 편집기 editor.ready 로드(404 없음) E2E 확인. 문서 슬러그 정정 | ✅ | ~40m |
 | 2026-06-22 | #6 | 편집기 내지 표시 수정 | "표지만 있고 내지 안 보임" 진단 — Storige 편집기 코드(useEditorContents/embed) 정밀 분석(Explore+직접read): 페이지는 셋의 templates로만 생성, 내지 복제는 기존 page 템플릿 필수(:1029). 셋 2f312032는 cover만+single@458×238 오설정이 원인(ShareSnap은 이미 정상, pageCount=canvasData길이-1 정확 도출). known-good 8×8 정사각책 구조를 210×210으로 복제한 **완전한 새 셋 sharesnap-210sq-book(표지 spread+내지 page)** DB INSERT(SSH+docker mariadb, 추가전용). env 전환+재배포+세션무효화. 편집기 표지+내지4+사진 cover-fit E2E 캡처 검증 | ✅ | ~90m |
+| 2026-06-23 | #7 | 정본정리+전수감사 | 정본 경로를 /Users/yohan/Developer/claude/Sharesnap로 확정(중복 Documents 클론 삭제, 유실0). GitHub 연결·마지막 배포 Ready 실측. 코드베이스 전수 감사(Explore 3트랙): 편집후 파이프라인(compose→webhook→PDF)=코드완성·prod미검증, Phase5/6(주문·결제·인화·관리자)=~10%·대부분 stub/미구현. STATUS 헤더(502 시점에 정체)·NEXT_ACTION 정정 | ✅ | ~40m |
 
 ---
 
