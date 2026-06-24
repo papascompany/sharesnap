@@ -10,6 +10,7 @@ export function PhotoFrame({
   scrim = 0.55,
   rounded,
   className = "",
+  priority = false,
 }: {
   url?: string;
   scene: SceneName;
@@ -17,6 +18,8 @@ export function PhotoFrame({
   scrim?: number;
   rounded?: boolean | string;
   className?: string;
+  /** 히어로 등 above-the-fold 이미지는 eager 로드(첫 로드 흰 깜빡임 방지) */
+  priority?: boolean;
 }) {
   if (url) {
     return (
@@ -26,7 +29,8 @@ export function PhotoFrame({
         <img
           src={url}
           alt={alt}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
           className={`absolute inset-0 size-full object-cover ${className}`}
         />
         {/* 하단 스크림 — 캡션/배지 가독 */}

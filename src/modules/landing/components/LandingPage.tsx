@@ -70,11 +70,13 @@ function Polaroid({
   rotate,
   className = "",
   float,
+  priority = false,
 }: {
   slot: PhotoSlot;
   rotate: number;
   className?: string;
   float?: "float" | "float-slow";
+  priority?: boolean;
 }) {
   const floatCls =
     float === "float"
@@ -94,6 +96,7 @@ function Polaroid({
           alt={slot.caption}
           rounded="rounded-lg"
           scrim={slot.url ? 0.28 : 0.5}
+          priority={priority}
         />
       </div>
       <p className="px-0.5 pt-1.5 pb-0.5 text-center text-[10px] font-medium text-zinc-500">
@@ -239,18 +242,21 @@ export function LandingPage({
               rotate={-6}
               float="float"
               className="absolute left-[6%] top-[8%] z-10 w-60 animate-scale-in"
+              priority
             />
             <Polaroid
               slot={heroPolaroids[0]}
               rotate={-14}
               float="float-slow"
               className="absolute left-[2%] bottom-[6%] w-48 animate-fade-up"
+              priority
             />
             <Polaroid
               slot={heroPolaroids[2]}
               rotate={11}
               float="float-slow"
               className="absolute right-[4%] top-[22%] w-56 animate-fade-up"
+              priority
             />
           </div>
         </div>
