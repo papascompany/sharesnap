@@ -310,7 +310,7 @@ export default async function OpengraphImage() {
               letterSpacing: -0.4,
             }}
           >
-            sharesnap.app
+            sharesnap-three.vercel.app
           </div>
           <div
             style={{

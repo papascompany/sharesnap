@@ -175,6 +175,57 @@ export function LandingEditor({ initial }: { initial: LandingContent }) {
   const patchCover = (patch: Partial<PhotoSlot>) =>
     setC((p) => ({ ...p, photobookCover: { ...p.photobookCover, ...patch } }));
 
+  // ── 본문(섹션 카피) 세터 ──────────────────────────────
+  // 섹션 객체의 단일 문자열 필드 설정. 한 섹션만 교체하고 전체를 LandingContent로 단언
+  // (모양은 항상 보존하고 알려진 필드 하나만 바꾸므로 안전).
+  const setSection = (
+    section: keyof LandingContent,
+    field: string,
+    v: string,
+  ) =>
+    setC((p) => {
+      const sec = p[section] as Record<string, unknown>;
+      return { ...p, [section]: { ...sec, [field]: v } } as LandingContent;
+    });
+  // 문자열 배열(불릿/태그/칩) 한 항목 설정.
+  const setStrArr = (
+    section: keyof LandingContent,
+    field: string,
+    i: number,
+    v: string,
+  ) =>
+    setC((p) => {
+      const sec = p[section] as Record<string, unknown>;
+      const arr = (sec[field] as string[]).map((s, idx) => (idx === i ? v : s));
+      return { ...p, [section]: { ...sec, [field]: arr } } as LandingContent;
+    });
+  // 카드 배열(title/desc) 한 항목의 한 키 설정.
+  const setCard = (
+    section: keyof LandingContent,
+    field: string,
+    i: number,
+    key: "title" | "desc",
+    v: string,
+  ) =>
+    setC((p) => {
+      const sec = p[section] as Record<string, unknown>;
+      const arr = (sec[field] as { title: string; desc: string }[]).map(
+        (card, idx) => (idx === i ? { ...card, [key]: v } : card),
+      );
+      return { ...p, [section]: { ...sec, [field]: arr } } as LandingContent;
+    });
+  // FAQ 배열(q/a) 한 항목의 한 키 설정.
+  const setFaq = (i: number, key: "q" | "a", v: string) =>
+    setC((p) => ({
+      ...p,
+      faq: {
+        ...p.faq,
+        items: p.faq.items.map((it, idx) =>
+          idx === i ? { ...it, [key]: v } : it,
+        ),
+      },
+    }));
+
   async function save() {
     setSaving(true);
     try {
@@ -262,6 +313,111 @@ export function LandingEditor({ initial }: { initial: LandingContent }) {
           <Field label="쇼케이스" value={c.headings.showcase} onChange={(v) => setHeading("showcase", v)} textarea />
           <Field label="바이럴" value={c.headings.viral} onChange={(v) => setHeading("viral", v)} textarea />
           <Field label="파이널 CTA" value={c.headings.final} onChange={(v) => setHeading("final", v)} textarea />
+        </Card>
+
+        <Card title="감정 훅 본문">
+          <Field label="작은 제목" value={c.emotion.eyebrow} onChange={(v) => setSection("emotion", "eyebrow", v)} />
+          <Field label="설명" value={c.emotion.desc} onChange={(v) => setSection("emotion", "desc", v)} textarea />
+          {c.emotion.bullets.map((b, i) => (
+            <Field
+              key={i}
+              label={`불릿 ${i + 1}`}
+              value={b}
+              onChange={(v) => setStrArr("emotion", "bullets", i, v)}
+            />
+          ))}
+        </Card>
+
+        <Card title="3단계 본문">
+          <Field label="작은 제목" value={c.how.eyebrow} onChange={(v) => setSection("how", "eyebrow", v)} />
+          {c.how.steps.map((s, i) => (
+            <div key={i} className="rounded-xl border border-border/60 bg-card p-3">
+              <p className="text-[12px] font-semibold text-muted-foreground">{`단계 ${i + 1}`}</p>
+              <div className="mt-2 space-y-3">
+                <Field label="제목" value={s.title} onChange={(v) => setCard("how", "steps", i, "title", v)} />
+                <Field label="설명" value={s.desc} onChange={(v) => setCard("how", "steps", i, "desc", v)} textarea />
+              </div>
+            </div>
+          ))}
+        </Card>
+
+        <Card title="가치 카드 본문">
+          <Field label="작은 제목" value={c.value.eyebrow} onChange={(v) => setSection("value", "eyebrow", v)} />
+          {c.value.cards.map((card, i) => (
+            <div key={i} className="rounded-xl border border-border/60 bg-card p-3">
+              <p className="text-[12px] font-semibold text-muted-foreground">{`카드 ${i + 1}`}</p>
+              <div className="mt-2 space-y-3">
+                <Field label="제목" value={card.title} onChange={(v) => setCard("value", "cards", i, "title", v)} />
+                <Field label="설명" value={card.desc} onChange={(v) => setCard("value", "cards", i, "desc", v)} textarea />
+              </div>
+            </div>
+          ))}
+        </Card>
+
+        <Card title="콜라주 본문">
+          <Field label="작은 제목" value={c.collage.eyebrow} onChange={(v) => setSection("collage", "eyebrow", v)} />
+          <Field label="설명" value={c.collage.desc} onChange={(v) => setSection("collage", "desc", v)} textarea />
+          <Field label="하단 면책 캡션" value={c.collage.note} onChange={(v) => setSection("collage", "note", v)} />
+        </Card>
+
+        <Card title="포토북 쇼케이스 본문">
+          <Field label="작은 제목" value={c.showcase.eyebrow} onChange={(v) => setSection("showcase", "eyebrow", v)} />
+          <Field label="설명" value={c.showcase.desc} onChange={(v) => setSection("showcase", "desc", v)} textarea />
+          {c.showcase.tags.map((t, i) => (
+            <Field
+              key={i}
+              label={`스펙 칩 ${i + 1}`}
+              value={t}
+              onChange={(v) => setStrArr("showcase", "tags", i, v)}
+            />
+          ))}
+        </Card>
+
+        <Card title="바이럴 본문">
+          <Field label="설명" value={c.viral.desc} onChange={(v) => setSection("viral", "desc", v)} textarea />
+        </Card>
+
+        <Card title="FAQ 본문">
+          <Field label="작은 제목" value={c.faq.eyebrow} onChange={(v) => setSection("faq", "eyebrow", v)} />
+          <Field label="섹션 제목" value={c.faq.title} onChange={(v) => setSection("faq", "title", v)} />
+          {c.faq.items.map((item, i) => (
+            <div key={i} className="rounded-xl border border-border/60 bg-card p-3">
+              <p className="text-[12px] font-semibold text-muted-foreground">{`FAQ ${i + 1}`}</p>
+              <div className="mt-2 space-y-3">
+                <Field label="질문" value={item.q} onChange={(v) => setFaq(i, "q", v)} />
+                <Field label="답변" value={item.a} onChange={(v) => setFaq(i, "a", v)} textarea />
+              </div>
+            </div>
+          ))}
+        </Card>
+
+        <Card title="신뢰 밴드 본문">
+          <Field label="작은 제목" value={c.trust.eyebrow} onChange={(v) => setSection("trust", "eyebrow", v)} />
+          <Field label="섹션 제목" hint="줄바꿈 = Enter" value={c.trust.title} onChange={(v) => setSection("trust", "title", v)} textarea />
+          <Field label="설명" value={c.trust.desc} onChange={(v) => setSection("trust", "desc", v)} textarea />
+          {c.trust.cards.map((card, i) => (
+            <div key={i} className="rounded-xl border border-border/60 bg-card p-3">
+              <p className="text-[12px] font-semibold text-muted-foreground">{`카드 ${i + 1}`}</p>
+              <div className="mt-2 space-y-3">
+                <Field label="제목" value={card.title} onChange={(v) => setCard("trust", "cards", i, "title", v)} />
+                <Field label="설명" value={card.desc} onChange={(v) => setCard("trust", "cards", i, "desc", v)} textarea />
+              </div>
+            </div>
+          ))}
+          <Field label="하단 안심 배너" value={c.trust.note} onChange={(v) => setSection("trust", "note", v)} textarea />
+        </Card>
+
+        <Card title="파이널 CTA 본문">
+          <Field label="설명" value={c.final.desc} onChange={(v) => setSection("final", "desc", v)} />
+          {c.final.chips.map((chip, i) => (
+            <Field
+              key={i}
+              label={`칩 ${i + 1}`}
+              value={chip}
+              onChange={(v) => setStrArr("final", "chips", i, v)}
+            />
+          ))}
+          <Field label="프라이버시 한 줄" value={c.final.privacy} onChange={(v) => setSection("final", "privacy", v)} textarea />
         </Card>
 
         <Card title="슬로건">

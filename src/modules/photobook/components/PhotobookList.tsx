@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookHeart, FileText, ShoppingBag } from "lucide-react";
+import { BookHeart, FileText, ShoppingBag, CreditCard } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,8 @@ import type { PhotobookOrderListItem } from "@/modules/photobook/types";
 
 /** 편집 이어가기가 가능한 상태(작업 중) */
 const EDITABLE = new Set(["draft", "editing", "confirmed"]);
+/** 결제(주문) 가능한 상태 — 편집 완료 후 */
+const PAYABLE = new Set(["confirmed", "generating_pdf", "pdf_ready"]);
 
 /**
  * 내 포토북 목록.
@@ -118,6 +120,7 @@ function PhotobookCard({ order }: { order: PhotobookOrderListItem }) {
     calculatePhotobookPrice(order.bookSize, order.pageCount, order.quantity);
   const isEstimate = order.totalPrice == null;
   const canEdit = EDITABLE.has(order.status);
+  const canPay = PAYABLE.has(order.status);
   const hasPdf = Boolean(order.pdfPath);
 
   return (
@@ -161,7 +164,7 @@ function PhotobookCard({ order }: { order: PhotobookOrderListItem }) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {hasPdf ? (
             <a
               href={`/api/photobook/orders/${order.id}/pdf`}
@@ -180,8 +183,20 @@ function PhotobookCard({ order }: { order: PhotobookOrderListItem }) {
           ) : null}
           {canEdit ? (
             <Link href={`/rooms/${order.roomId}/photobook`}>
-              <Button size="sm" className="h-9 rounded-lg font-semibold">
+              <Button
+                size="sm"
+                variant={canPay ? "outline" : "default"}
+                className="h-9 rounded-lg font-semibold"
+              >
                 편집 이어서
+              </Button>
+            </Link>
+          ) : null}
+          {canPay ? (
+            <Link href={`/photobooks/${order.id}/checkout`}>
+              <Button size="sm" className="h-9 rounded-lg font-semibold">
+                <CreditCard className="size-4" aria-hidden />
+                주문하기
               </Button>
             </Link>
           ) : null}

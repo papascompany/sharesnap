@@ -31,6 +31,61 @@ export interface Database {
         };
         Relationships: [];
       };
+      // 토스페이먼츠 결제 레코드(포토북·인화 공용). 마이그레이션 012.
+      payments: {
+        Row: {
+          id: string;
+          user_id: string;
+          order_kind: "photobook" | "print";
+          order_id: string;
+          provider: string;
+          merchant_order_id: string;
+          amount: number;
+          status: "ready" | "paid" | "canceled" | "failed";
+          payment_key: string | null;
+          method: string | null;
+          receipt_url: string | null;
+          approved_at: string | null;
+          raw: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          order_kind: "photobook" | "print";
+          order_id: string;
+          provider?: string;
+          merchant_order_id: string;
+          amount: number;
+          status?: "ready" | "paid" | "canceled" | "failed";
+          payment_key?: string | null;
+          method?: string | null;
+          receipt_url?: string | null;
+          approved_at?: string | null;
+          raw?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          order_kind?: "photobook" | "print";
+          order_id?: string;
+          provider?: string;
+          merchant_order_id?: string;
+          amount?: number;
+          status?: "ready" | "paid" | "canceled" | "failed";
+          payment_key?: string | null;
+          method?: string | null;
+          receipt_url?: string | null;
+          approved_at?: string | null;
+          raw?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       rooms: {
         Row: {
           id: string;
@@ -227,6 +282,11 @@ export interface Database {
           cover_file_id: string | null;
           content_file_id: string | null;
           synthesis_job_id: string | null;
+          recipient_name: string | null;
+          recipient_phone: string | null;
+          shipping_address: Json | null;
+          memo: string | null;
+          paid_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -257,6 +317,11 @@ export interface Database {
           cover_file_id?: string | null;
           content_file_id?: string | null;
           synthesis_job_id?: string | null;
+          recipient_name?: string | null;
+          recipient_phone?: string | null;
+          shipping_address?: Json | null;
+          memo?: string | null;
+          paid_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -287,6 +352,11 @@ export interface Database {
           cover_file_id?: string | null;
           content_file_id?: string | null;
           synthesis_job_id?: string | null;
+          recipient_name?: string | null;
+          recipient_phone?: string | null;
+          shipping_address?: Json | null;
+          memo?: string | null;
+          paid_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -336,7 +406,9 @@ export interface Database {
           recipient_name: string;
           recipient_phone: string;
           memo: string | null;
+          paid_at: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -354,7 +426,9 @@ export interface Database {
           recipient_name: string;
           recipient_phone: string;
           memo?: string | null;
+          paid_at?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           id?: string;
@@ -372,7 +446,9 @@ export interface Database {
           recipient_name?: string;
           recipient_phone?: string;
           memo?: string | null;
+          paid_at?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };

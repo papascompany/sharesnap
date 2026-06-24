@@ -148,8 +148,36 @@ export function LandingPage({
   isAuthed: boolean;
   content: LandingContent;
 }) {
-  const { hero, heroPolaroids, bento, photobookCover, headings, slogan } =
-    content;
+  const {
+    hero,
+    heroPolaroids,
+    bento,
+    photobookCover,
+    headings,
+    slogan,
+    emotion,
+    how,
+    value,
+    collage,
+    showcase,
+    viral,
+    faq,
+    trust,
+    final,
+  } = content;
+
+  // 아이콘/번호/레이아웃은 코드 고정, 텍스트만 content에서 주입(인덱스로 zip).
+  const howIcons = [Share2, Images, BookHeart] as const;
+  const stepNums = ["01", "02", "03"] as const;
+  const valueIcons = [MessageCircle, Camera, BookHeart, ShoppingBag] as const;
+  const valueLayout = [
+    { wide: true, kakao: true },
+    { wide: false, kakao: false },
+    { wide: false, kakao: false },
+    { wide: true, kakao: false },
+  ] as const;
+  const trustIcons = [LockKeyhole, EyeOff, CreditCard, Smartphone] as const;
+  const finalChipIcons = [CreditCard, Download, Zap] as const;
 
   return (
     <main className="overflow-x-hidden bg-background">
@@ -265,13 +293,12 @@ export function LandingPage({
       {/* ───────────── 감정 훅 ───────────── */}
       <section className="px-5 py-20 lg:py-28">
         <Reveal className="mx-auto max-w-md lg:max-w-3xl lg:text-center">
-          <p className="text-[13px] font-semibold text-primary">그날의 사진들</p>
+          <p className="text-[13px] font-semibold text-primary">{emotion.eyebrow}</p>
           <h2 className="mt-2 whitespace-pre-line text-[clamp(23px,5vw,34px)] font-bold leading-[1.22] tracking-[-0.02em]">
             {headings.emotion}
           </h2>
           <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground lg:mx-auto lg:max-w-xl lg:text-[16px]">
-            누구는 안 보내고, 누구 건 화질이 깨지고, 한참 스크롤을 올려야 찾는
-            우리의 그날.
+            {emotion.desc}
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-2.5 lg:justify-center">
@@ -293,11 +320,7 @@ export function LandingPage({
           </div>
 
           <ul className="mt-7 space-y-2.5 text-[14.5px] text-foreground/80 lg:mx-auto lg:flex lg:max-w-2xl lg:flex-wrap lg:justify-center lg:gap-x-6 lg:space-y-0">
-            {[
-              "폰 속에 잠든 베스트 컷",
-              "단톡방에 묻힌 단체샷",
-              "1년 뒤엔 어디 있는지도 모를 그 순간",
-            ].map((t) => (
+            {emotion.bullets.map((t) => (
               <li key={t} className="flex items-center gap-2.5">
                 <span className="size-1.5 shrink-0 rounded-full bg-primary" />
                 {t}
@@ -313,105 +336,70 @@ export function LandingPage({
         className="scroll-mt-4 bg-secondary/40 px-5 py-20 lg:py-28"
       >
         <Reveal>
-          <SectionHead eyebrow="딱 3단계" title={headings.how} />
+          <SectionHead eyebrow={how.eyebrow} title={headings.how} />
         </Reveal>
 
         <div className="mx-auto mt-10 grid max-w-5xl gap-4 md:grid-cols-3 lg:mt-14 lg:gap-6">
-          {[
-            {
-              n: "01",
-              icon: Share2,
-              title: "카톡으로 부르기",
-              desc: "공유방 링크를 단톡방에 보내면 끝. 앱 설치도, 따로 회원가입도 없어요. 카카오 1탭이면 입장.",
-            },
-            {
-              n: "02",
-              icon: Images,
-              title: "다 같이 사진 모으기",
-              desc: "각자 폰 속 사진을 올리면 실시간으로 한 화면에. 채팅으로 그날의 수다까지 함께.",
-            },
-            {
-              n: "03",
-              icon: BookHeart,
-              title: "고르면 포토북 완성",
-              desc: "사진만 고르면 표지·내지가 자동 편집. 인화도 포토북 주문도 한 번에.",
-            },
-          ].map((s, i) => (
-            <Reveal key={s.n} delay={i * 90}>
-              <div className="relative h-full overflow-hidden rounded-3xl border border-border/60 bg-card p-6 lg:p-8">
-                <span className="text-sunset text-[40px] font-extrabold leading-none tracking-tight lg:text-[48px]">
-                  {s.n}
-                </span>
-                <div className="mt-4 inline-flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <s.icon className="size-6" strokeWidth={1.6} aria-hidden />
+          {how.steps.map((s, i) => {
+            const Icon = howIcons[i % howIcons.length];
+            const n = stepNums[i % stepNums.length];
+            return (
+              <Reveal key={i} delay={i * 90}>
+                <div className="relative h-full overflow-hidden rounded-3xl border border-border/60 bg-card p-6 lg:p-8">
+                  <span className="text-sunset text-[40px] font-extrabold leading-none tracking-tight lg:text-[48px]">
+                    {n}
+                  </span>
+                  <div className="mt-4 inline-flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Icon className="size-6" strokeWidth={1.6} aria-hidden />
+                  </div>
+                  <h3 className="mt-4 text-[18px] font-bold tracking-[-0.01em] lg:text-[20px]">
+                    {s.title}
+                  </h3>
+                  <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground lg:text-[15px]">
+                    {s.desc}
+                  </p>
                 </div>
-                <h3 className="mt-4 text-[18px] font-bold tracking-[-0.01em] lg:text-[20px]">
-                  {s.title}
-                </h3>
-                <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground lg:text-[15px]">
-                  {s.desc}
-                </p>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            );
+          })}
         </div>
       </section>
 
       {/* ───────────── 가치 벤토 ───────────── */}
       <section className="px-5 py-20 lg:py-28">
         <Reveal>
-          <SectionHead eyebrow="왜 ShareSnap" title={headings.value} />
+          <SectionHead eyebrow={value.eyebrow} title={headings.value} />
         </Reveal>
         <div className="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-3.5 lg:max-w-5xl lg:grid-cols-4 lg:gap-5">
-          {[
-            {
-              icon: MessageCircle,
-              title: "카톡 1탭 참여",
-              desc: "링크 클릭 → 카카오 로그인이면 끝. 앱 설치·가입 절차 없이 웹에서 바로.",
-              wide: true,
-              kakao: true,
-            },
-            {
-              icon: Camera,
-              title: "모두의 사진, 실시간으로",
-              desc: "누가 올려도 곧바로 한 화면에 모여요.",
-            },
-            {
-              icon: BookHeart,
-              title: "고르면 자동 포토북",
-              desc: "표지부터 내지까지 자동 편집.",
-            },
-            {
-              icon: ShoppingBag,
-              title: "인화·포토북 주문까지",
-              desc: "마음에 들면 그대로 주문. 손에 잡히는 진짜 책으로.",
-              wide: true,
-            },
-          ].map((v, i) => (
-            <Reveal
-              key={v.title}
-              delay={i * 70}
-              className={v.wide ? "col-span-2" : ""}
-            >
-              <div className="flex h-full flex-col rounded-3xl border border-border/60 bg-card p-5 lg:p-6">
-                <div
-                  className={`inline-flex size-11 items-center justify-center rounded-2xl ${
-                    v.kakao
-                      ? "bg-kakao text-kakao-foreground"
-                      : "bg-primary/10 text-primary"
-                  }`}
-                >
-                  <v.icon className="size-[22px]" strokeWidth={1.7} aria-hidden />
+          {value.cards.map((v, i) => {
+            const Icon = valueIcons[i % valueIcons.length];
+            const layout = valueLayout[i % valueLayout.length];
+            return (
+              <Reveal
+                key={i}
+                delay={i * 70}
+                className={layout.wide ? "col-span-2" : ""}
+              >
+                <div className="flex h-full flex-col rounded-3xl border border-border/60 bg-card p-5 lg:p-6">
+                  <div
+                    className={`inline-flex size-11 items-center justify-center rounded-2xl ${
+                      layout.kakao
+                        ? "bg-kakao text-kakao-foreground"
+                        : "bg-primary/10 text-primary"
+                    }`}
+                  >
+                    <Icon className="size-[22px]" strokeWidth={1.7} aria-hidden />
+                  </div>
+                  <h3 className="mt-3.5 text-[16px] font-bold tracking-[-0.01em] lg:text-[17px]">
+                    {v.title}
+                  </h3>
+                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground lg:text-[14px]">
+                    {v.desc}
+                  </p>
                 </div>
-                <h3 className="mt-3.5 text-[16px] font-bold tracking-[-0.01em] lg:text-[17px]">
-                  {v.title}
-                </h3>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground lg:text-[14px]">
-                  {v.desc}
-                </p>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            );
+          })}
         </div>
       </section>
 
@@ -419,9 +407,9 @@ export function LandingPage({
       <section className="bg-secondary/40 px-5 py-20 lg:py-28">
         <Reveal>
           <SectionHead
-            eyebrow="우리 모두의 앨범"
+            eyebrow={collage.eyebrow}
             title={headings.collage}
-            desc="누가 올려도 실시간으로 바로. 여행도, MT도, 가족 행사도 한 방에."
+            desc={collage.desc}
           />
         </Reveal>
         <Reveal delay={80} className="mx-auto mt-9 max-w-2xl lg:mt-12 lg:max-w-4xl">
@@ -466,7 +454,7 @@ export function LandingPage({
             })}
           </div>
           <p className="mt-3 text-center text-[11.5px] text-muted-foreground">
-            ※ 화면은 예시예요
+            {collage.note}
           </p>
         </Reveal>
       </section>
@@ -475,23 +463,20 @@ export function LandingPage({
       <section className="px-5 py-20 lg:py-28">
         <div className="mx-auto grid max-w-4xl items-center gap-10 md:grid-cols-2 lg:max-w-5xl lg:gap-16">
           <Reveal className="order-2 md:order-1">
-            <SectionHead align="left" eyebrow="결과물" title={headings.showcase} />
+            <SectionHead align="left" eyebrow={showcase.eyebrow} title={headings.showcase} />
             <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground lg:text-[16px]">
-              표지부터 마지막 장까지 자동 편집. 인스타에 올리고 싶은 표지, 손에
-              잡히는 진짜 책으로.
+              {showcase.desc}
             </p>
             <ul className="mt-5 flex flex-wrap gap-2">
-              {["정사각 210×210", "A4 · A5", "자동 레이아웃", "인쇄용 PDF"].map(
-                (s) => (
-                  <li
-                    key={s}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-[12.5px] font-medium text-foreground/80"
-                  >
-                    <CheckCircle2 className="size-3.5 text-primary" aria-hidden />
-                    {s}
-                  </li>
-                ),
-              )}
+              {showcase.tags.map((s) => (
+                <li
+                  key={s}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-3 py-1.5 text-[12.5px] font-medium text-foreground/80"
+                >
+                  <CheckCircle2 className="size-3.5 text-primary" aria-hidden />
+                  {s}
+                </li>
+              ))}
             </ul>
           </Reveal>
 
@@ -546,7 +531,7 @@ export function LandingPage({
               {headings.viral}
             </h2>
             <p className="mx-auto mt-3 max-w-sm text-[15px] leading-relaxed text-white/90 lg:max-w-md lg:text-[16px]">
-              단톡방에 링크 하나 보내면 친구들이 알아서 사진을 채워요.
+              {viral.desc}
             </p>
           </Reveal>
 
@@ -600,31 +585,10 @@ export function LandingPage({
       {/* ───────────── FAQ ───────────── */}
       <section className="px-5 py-20 lg:py-28">
         <Reveal>
-          <SectionHead eyebrow="안심하세요" title="쓰기 전에 궁금한 것들" />
+          <SectionHead eyebrow={faq.eyebrow} title={faq.title} />
         </Reveal>
         <Reveal delay={70} className="mx-auto mt-8 max-w-xl space-y-2.5">
-          {[
-            {
-              q: "앱을 꼭 깔아야 하나요?",
-              a: "아니요. 카톡 링크로 웹에서 바로 시작해요. 홈 화면에 추가하면 앱처럼 쓸 수도 있어요.",
-            },
-            {
-              q: "친구도 가입해야 하나요?",
-              a: "카카오 1탭이면 끝이에요. 로그인 전에도 어떤 방인지 미리보기로 확인할 수 있어요.",
-            },
-            {
-              q: "사진은 안전한가요?",
-              a: "초대된 멤버, 링크를 가진 사람만 방에 들어올 수 있어요. 올린 사진은 공유방 멤버에게만 보여요.",
-            },
-            {
-              q: "포토북은 어떻게 만들어지나요?",
-              a: "고른 사진으로 표지와 내지를 자동 편집해요. 마음에 들면 그대로 인화·주문하면 돼요.",
-            },
-            {
-              q: "비용이 드나요?",
-              a: "모으고 만드는 건 자유예요. 인화나 포토북을 주문할 때만 비용이 들어요. (가격은 주문 화면에서 확인)",
-            },
-          ].map((f) => (
+          {faq.items.map((f) => (
             <details
               key={f.q}
               className="group rounded-2xl border border-border/60 bg-card px-5 [&_summary::-webkit-details-marker]:hidden"
@@ -645,55 +609,37 @@ export function LandingPage({
       <section className="px-5 py-20 lg:py-28">
         <Reveal>
           <SectionHead
-            eyebrow="약속"
-            title={"과장 없이,\n진짜 되는 것만 약속해요"}
-            desc="후기도 별점도 부풀린 숫자도 없어요. 대신, 지금 바로 확인할 수 있는 것들."
+            eyebrow={trust.eyebrow}
+            title={trust.title}
+            desc={trust.desc}
           />
         </Reveal>
 
         <div className="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-3.5 lg:max-w-5xl lg:grid-cols-4 lg:gap-5">
-          {[
-            {
-              icon: LockKeyhole,
-              title: "초대받은 사람만 입장",
-              desc: "링크를 가진 사람·초대된 멤버만 공유방에 들어올 수 있어요.",
-            },
-            {
-              icon: EyeOff,
-              title: "사진은 우리끼리만",
-              desc: "올린 사진은 그 공유방 멤버에게만 보여요. 외부엔 공개되지 않아요.",
-            },
-            {
-              icon: CreditCard,
-              title: "카드 등록 없이 시작",
-              desc: "모으고 만드는 건 자유. 인화·포토북을 주문할 때만 결제해요.",
-            },
-            {
-              icon: Smartphone,
-              title: "앱 설치 없이 웹에서",
-              desc: "카톡 링크 1탭, 카카오 로그인이면 끝. 따로 깔 것도 가입 절차도 없어요.",
-            },
-          ].map((g, i) => (
-            <Reveal key={g.title} delay={i * 70}>
-              <div className="flex h-full flex-col rounded-3xl border border-border/60 bg-card p-5 lg:p-6">
-                <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                  <g.icon className="size-[22px]" strokeWidth={1.7} aria-hidden />
+          {trust.cards.map((g, i) => {
+            const Icon = trustIcons[i % trustIcons.length];
+            return (
+              <Reveal key={i} delay={i * 70}>
+                <div className="flex h-full flex-col rounded-3xl border border-border/60 bg-card p-5 lg:p-6">
+                  <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Icon className="size-[22px]" strokeWidth={1.7} aria-hidden />
+                  </div>
+                  <h3 className="mt-3.5 text-[16px] font-bold tracking-[-0.01em]">
+                    {g.title}
+                  </h3>
+                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
+                    {g.desc}
+                  </p>
                 </div>
-                <h3 className="mt-3.5 text-[16px] font-bold tracking-[-0.01em]">
-                  {g.title}
-                </h3>
-                <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
-                  {g.desc}
-                </p>
-              </div>
-            </Reveal>
-          ))}
+              </Reveal>
+            );
+          })}
         </div>
 
         <Reveal delay={120} className="mx-auto mt-7 max-w-md">
           <p className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border/60 bg-secondary/40 px-4 py-3 text-center text-[13px] font-medium text-foreground/75">
             <ShieldCheck className="size-4 shrink-0 text-primary" aria-hidden />
-            마음에 드는 사진을 골라, 마음에 들 때만 주문하세요.
+            {trust.note}
           </p>
         </Reveal>
       </section>
@@ -729,7 +675,7 @@ export function LandingPage({
             {headings.final}
           </h2>
           <p className="mt-3 text-[15.5px] text-white/90 lg:text-[17px]">
-            모으는 데 3초, 추억은 평생.
+            {final.desc}
           </p>
           <p className="mt-6 text-[26px] font-bold tracking-[-0.01em] lg:text-[32px]">
             {slogan}
@@ -740,22 +686,19 @@ export function LandingPage({
           </div>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[12px] text-white/85">
-            <span className="inline-flex items-center gap-1.5">
-              <CreditCard className="size-3.5" aria-hidden />
-              카드 등록 없이
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Download className="size-3.5" aria-hidden />
-              앱 설치 없이
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Zap className="size-3.5" aria-hidden />
-              카카오로 3초
-            </span>
+            {final.chips.map((chip, i) => {
+              const ChipIcon = finalChipIcons[i % finalChipIcons.length];
+              return (
+                <span key={i} className="inline-flex items-center gap-1.5">
+                  <ChipIcon className="size-3.5" aria-hidden />
+                  {chip}
+                </span>
+              );
+            })}
           </div>
           <p className="mt-5 inline-flex items-center gap-1.5 text-[12px] text-white/75">
             <Heart className="size-3.5" aria-hidden />
-            올린 사진은 우리 공유방 멤버에게만 보여요
+            {final.privacy}
           </p>
         </Reveal>
       </section>
