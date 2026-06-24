@@ -123,6 +123,20 @@
 - **배포 게이트**: GitHub auto-deploy 대신 `vercel --prod` CLI 사용. 로컬 머신 과부하(load~100, 타 세션 빌드 경합) 시 로컬 `npm run build`가 굶주려 미완 → **Vercel 원격 빌드가 실 빌드 게이트**(Build Completed 24s ✅). env 변경 후 반드시 재배포해야 반영(NEXT_PUBLIC은 빌드 인라인)
 - **잔여(외부작업)**: 카카오 앱키(JS키+Provider), Storige Admin webhook(uploadCallbackUrl)·allowedOrigins에 sharesnap-three 등록
 
+### ADR-013 (2026-06-24): 상업화 레이어 — 토스페이먼츠 결제 + 체크아웃 + 인화주문(M7) + 관리자(M9)
+- **결정**: 결제 PG = 토스페이먼츠 v2 표준 결제위젯(사용자 선택). 포토북·인화 주문 공용 결제 파이프라인.
+- **결제 아키텍처(보안 핵심)**: 청구 금액은 **항상 서버가 pricing으로 재산출**(클라 위변조 방지). 흐름:
+  ① 클라 체크아웃 → `POST /api/payments/checkout`(배송지) → 서버 `prepareCheckout`: 본인주문 검증 → 금액 산출 → 배송지/상태 저장 + ready payment(service_role) 발급 → CheckoutSession 반환
+  ② 토스 위젯 `requestPayment`(redirect) → successUrl=`/api/payments/confirm`
+  ③ confirm: ready payment 금액 일치 검증 → 토스 `POST /v1/payments/confirm`(시크릿키+콜론 base64 Basic) → payments=paid + 주문=paid(service_role) → `/orders?paid` 리다이렉트
+  ④ webhook(`/api/payments/webhook`): 사후 동기화(취소/실패) best-effort(토스 v2는 본문 서명 없음 — IP allowlist 권장)
+- **payments 테이블(마이그012)**: order_kind(photobook|print)+order_id, merchant_order_id(토스 orderId, unique), amount, status(ready|paid|canceled|failed), payment_key/method/receipt_url/approved_at/raw. RLS=본인 select만(쓰기는 service_role 전용). photobook_orders에 배송컬럼(recipient_name/phone/shipping_address/memo/paid_at) 추가(print_orders는 004부터 보유).
+- **SDK 로드**: 토스 v2 = CDN 동적 로드(`js.tosspayments.com/v2/standard` → window.TossPayments), Daum 우편번호 = `t1.daumcdn.net/.../postcode.v2.js`. 둘 다 npm 미설치(번들 영향0·카카오 SDK 동일 동적로드 패턴). 키 미설정 시 결제 graceful 비활성(배송폼은 입력 가능).
+- **인화주문 M7**: print-order 모듈(PRINT_SIZES/PRINT_PAPERS placeholder + printOrderService + usePrintOrders + PrintOrderCreator). draft는 배송지 빈값으로 생성(print_orders NOT NULL 회피), 체크아웃서 채움. 사진 소스=공유방 listPhotos.
+- **관리자 M9**: getAdmin()(ADMIN_EMAILS) 게이트 + service_role 통합조회(adminOrders.listAllOrders) → /admin·/admin/orders(상태변경 /api/admin/orders PATCH). RLS 우회라 모든 주문 노출. AdminDenied 공통 컴포넌트로 게이트 UX 통일.
+- **적용 잔여(운영자)**: ① 마이그012 SQL(운영 프로젝트 rtnfltwmnizkjrrgjudk는 MCP 토큰 계정 밖 → Supabase SQL Editor 수동) ② 토스 키 env(NEXT_PUBLIC_TOSS_CLIENT_KEY·TOSS_SECRET_KEY) ③ vercel --prod 배포 ④ 정가표(PHOTOBOOK_PRICES/PRINT_PRICES placeholder) 확정.
+- **교훈**: photoService/photobookService가 'use client'라 서버 컴포넌트(체크아웃 페이지)에서 toPhoto 사용 불가 → 서버/클라 공용 `thumbnailPublicUrl`(결정적 public URL 조립) 헬퍼 분리. next/image 원격패턴 미설정 컨벤션이라 썸네일은 `<img>`(no-img-element disable 주석).
+
 ### ADR-010: 디자인 시스템 — "추억을 모아 빛나게"
 - **결정일**: 2026-05-16 (상세: docs/design-system.md — 시각 결정의 단일 소스)
 - **결정**: Primary 선셋 코랄 oklch(0.655 0.19 32) + 앰버 그라데이션, 웜 뉴트럴, 다크모드=시네마 모드(웜 니어블랙, 사진 뷰어는 순수 블랙), Pretendard Variable(dynamic-subset CDN), radius 0.75rem, 모바일 CTA h-12
@@ -246,6 +260,17 @@ Redirect URI : https://sharesnap.app/auth/callback
 > 근거: 실제 콜백 라우트 핸들러가 `src/app/auth/callback/route.ts`(=`/auth/callback`)이고,
 > OAuth `redirectTo`도 `${window.location.origin}/auth/callback`(패턴1, 본 파일 L135)이라 코드와 일치시킴.
 > (참고: Supabase Auth가 카카오 토큰 교환을 대행하므로 provider별 `/kakao` 하위 경로는 불필요)
+
+### 토스페이먼츠 정보 (ADR-013, 2026-06-24)
+```
+Client Key (NEXT_PUBLIC_TOSS_CLIENT_KEY) : (등록 후 기록 — 빌드 인라인이라 변경 시 재배포 필수)
+Secret Key (TOSS_SECRET_KEY)             : (서버 전용 — 절대 NEXT_PUBLIC/git 금지, 채팅 노출 시 회전)
+Webhook URL : https://sharesnap-three.vercel.app/api/payments/webhook (토스 개발자센터 등록 — 결제 사후 동기화)
+successUrl / failUrl : /api/payments/confirm · /api/payments/fail (코드 자동 — APP_URL 기준)
+승인 API   : POST https://api.tosspayments.com/v1/payments/confirm  (Authorization: Basic base64(secretKey + ":"))
+SDK 로드   : CDN https://js.tosspayments.com/v2/standard (window.TossPayments) — npm 미설치
+미설정 시  : 결제 graceful 비활성("결제 준비 중" 안내), 배송폼은 입력 가능
+```
 
 ---
 
