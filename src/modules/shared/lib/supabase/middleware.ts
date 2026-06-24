@@ -45,6 +45,10 @@ export const updateSession = async (request: NextRequest) => {
     pathname.startsWith("/icons") ||
     pathname === "/offline" || // PWA 오프라인 폴백 — SW install 프리캐시가 비로그인으로 fetch함
     pathname.startsWith("/.well-known") || // TWA Digital Asset Links 등 (assetlinks.json 선반영)
+    // OG/트위터 공유 이미지(next/og 메타 라우트) — 카톡/슬랙/트위터 크롤러가 비로그인으로 fetch.
+    // /login 리다이렉트 시 봇이 PNG 대신 HTML을 받아 썸네일이 깨진다.
+    pathname.startsWith("/opengraph-image") ||
+    pathname.startsWith("/twitter-image") ||
     pathname === "/manifest.json" ||
     pathname === "/favicon.ico";
 

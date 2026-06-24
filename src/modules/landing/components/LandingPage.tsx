@@ -16,12 +16,19 @@ import {
   Download,
   Zap,
   Users,
-  MountainSnow,
   Heart,
   CheckCircle2,
+  LockKeyhole,
+  EyeOff,
+  Smartphone,
+  ShieldCheck,
 } from "lucide-react";
 import { Reveal } from "@/modules/landing/components/Reveal";
 import { StickyCta } from "@/modules/landing/components/StickyCta";
+import {
+  SceneTile,
+  type SceneName,
+} from "@/modules/landing/components/SceneTile";
 
 // ── 사진 플레이스홀더 그라데이션(chart-1~5 조합 — 실제 사진 없이 컬러풀한 앨범 표현) ──
 const TILE: Array<[string, string]> = [
@@ -71,15 +78,15 @@ function PrimaryCta({
   );
 }
 
-// ── 폴라로이드 ──
+// ── 폴라로이드 (씬 타일 = 스타일라이즈드 "사진") ──
 function Polaroid({
-  i,
+  scene,
   caption,
   rotate,
   className = "",
   float,
 }: {
-  i: number;
+  scene: SceneName;
   caption?: string;
   rotate: number;
   className?: string;
@@ -97,11 +104,8 @@ function Polaroid({
       className={`rounded-2xl bg-white p-2 pb-1 shadow-xl ring-1 ring-black/5 ${floatCls} ${className}`}
       style={{ transform: `rotate(${rotate}deg)` }}
     >
-      <div
-        className="relative aspect-square w-full overflow-hidden rounded-lg"
-        style={tileStyle(i)}
-      >
-        <div className="absolute inset-0 bg-scrim-photo opacity-60" />
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+        <SceneTile scene={scene} rounded="rounded-lg" scrim={0.5} />
       </div>
       <p className="px-0.5 pt-1.5 pb-0.5 text-center text-[10px] font-medium text-zinc-500">
         {caption ?? "우리의 그날"}
@@ -199,21 +203,21 @@ export function LandingPage({ isAuthed }: { isAuthed: boolean }) {
           {/* 폴라로이드 콜라주 */}
           <div className="relative mx-auto mt-9 mb-9 flex h-40 w-full max-w-xs items-center justify-center">
             <Polaroid
-              i={2}
+              scene="picnic"
               caption="동아리 MT"
               rotate={-13}
               float="float-slow"
               className="absolute left-2 top-2 w-24 animate-fade-up"
             />
             <Polaroid
-              i={0}
+              scene="sunset-beach"
               caption="제주 2박 3일"
               rotate={4}
               float="float"
               className="absolute z-10 w-28 animate-scale-in"
             />
             <Polaroid
-              i={3}
+              scene="fireworks"
               caption="졸업 여행"
               rotate={14}
               float="float-slow"
@@ -423,17 +427,16 @@ export function LandingPage({ isAuthed }: { isAuthed: boolean }) {
         <Reveal delay={80} className="mx-auto mt-9 max-w-2xl">
           <div className="grid grid-cols-4 gap-2.5">
             {[
-              { t: "제주 2박 3일", span: "col-span-2 row-span-2 aspect-square", i: 0, meta: "여러 장 · 친구들" },
-              { t: "동아리 MT", span: "col-span-2 aspect-[2/1]", i: 3, meta: "" },
-              { t: "엄마 환갑여행", span: "col-span-1 aspect-square", i: 4, meta: "" },
-              { t: "졸업 여행", span: "col-span-1 aspect-square", i: 2, meta: "" },
+              { t: "제주 2박 3일", span: "col-span-2 row-span-2 aspect-square", scene: "sunset-beach" as SceneName, meta: "여러 장 · 친구들" },
+              { t: "동아리 MT", span: "col-span-2 aspect-[2/1]", scene: "mountains" as SceneName, meta: "" },
+              { t: "엄마 환갑여행", span: "col-span-1 aspect-square", scene: "picnic" as SceneName, meta: "" },
+              { t: "졸업 여행", span: "col-span-1 aspect-square", scene: "city-night" as SceneName, meta: "" },
             ].map((tile, idx) => (
               <div
                 key={idx}
                 className={`relative overflow-hidden rounded-2xl ring-1 ring-black/5 ${tile.span}`}
-                style={tileStyle(tile.i)}
               >
-                <div className="absolute inset-0 bg-scrim-photo" />
+                <SceneTile scene={tile.scene} scrim={0.72} />
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3">
                   <span className="text-[12.5px] font-semibold text-white drop-shadow">
                     {tile.t}
@@ -513,10 +516,13 @@ export function LandingPage({ isAuthed }: { isAuthed: boolean }) {
                       ShareSnap Photobook
                     </span>
                     <div className="rounded-xl bg-white/15 p-2 backdrop-blur-sm">
-                      <div
-                        className="aspect-square w-full rounded-lg"
-                        style={tileStyle(0)}
-                      />
+                      <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                        <SceneTile
+                          scene="sunset-beach"
+                          rounded="rounded-lg"
+                          scrim={0.4}
+                        />
+                      </div>
                     </div>
                     <div>
                       <Sparkles className="mb-1 size-5" aria-hidden />
@@ -640,6 +646,69 @@ export function LandingPage({ isAuthed }: { isAuthed: boolean }) {
               </p>
             </details>
           ))}
+        </Reveal>
+      </section>
+
+      {/* ───────────── 신뢰 밴드 (정직한 보장 — 파이널 CTA 직전) ───────────── */}
+      <section className="px-5 py-20">
+        <Reveal>
+          <SectionHead
+            eyebrow="약속"
+            title={
+              <>
+                과장 없이,
+                <br />
+                진짜 되는 것만 약속해요
+              </>
+            }
+            desc="후기도 별점도 부풀린 숫자도 없어요. 대신, 지금 바로 확인할 수 있는 것들."
+          />
+        </Reveal>
+
+        <div className="mx-auto mt-10 grid max-w-2xl grid-cols-2 gap-3.5">
+          {[
+            {
+              icon: LockKeyhole,
+              title: "초대받은 사람만 입장",
+              desc: "링크를 가진 사람·초대된 멤버만 공유방에 들어올 수 있어요.",
+            },
+            {
+              icon: EyeOff,
+              title: "사진은 우리끼리만",
+              desc: "올린 사진은 그 공유방 멤버에게만 보여요. 외부엔 공개되지 않아요.",
+            },
+            {
+              icon: CreditCard,
+              title: "카드 등록 없이 시작",
+              desc: "모으고 만드는 건 자유. 인화·포토북을 주문할 때만 결제해요.",
+            },
+            {
+              icon: Smartphone,
+              title: "앱 설치 없이 웹에서",
+              desc: "카톡 링크 1탭, 카카오 로그인이면 끝. 따로 깔 것도 가입 절차도 없어요.",
+            },
+          ].map((g, i) => (
+            <Reveal key={g.title} delay={i * 70}>
+              <div className="flex h-full flex-col rounded-3xl border border-border/60 bg-card p-5">
+                <div className="inline-flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <g.icon className="size-[22px]" strokeWidth={1.7} aria-hidden />
+                </div>
+                <h3 className="mt-3.5 text-[16px] font-bold tracking-[-0.01em]">
+                  {g.title}
+                </h3>
+                <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
+                  {g.desc}
+                </p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+
+        <Reveal delay={120} className="mx-auto mt-7 max-w-md">
+          <p className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border/60 bg-secondary/40 px-4 py-3 text-center text-[13px] font-medium text-foreground/75">
+            <ShieldCheck className="size-4 shrink-0 text-primary" aria-hidden />
+            마음에 드는 사진을 골라, 마음에 들 때만 주문하세요.
+          </p>
         </Reveal>
       </section>
 
