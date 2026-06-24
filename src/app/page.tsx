@@ -1,5 +1,6 @@
 import { createClient } from "@/modules/shared/lib/supabase/server";
 import { LandingPage } from "@/modules/landing/components/LandingPage";
+import { getLandingContent } from "@/modules/landing/services/landingContentServer";
 
 export const metadata = {
   title: "ShareSnap — 추억을 모아 빛나게",
@@ -14,12 +15,15 @@ export const metadata = {
 };
 
 // 루트(/) 공개 랜딩. 미들웨어상 "/"는 public이라 비로그인도 접근.
-// 로그인 여부로 CTA만 분기(로그인=내 공유방, 비로그인=카카오로 시작).
+// 콘텐츠는 CMS(site_content)에서 읽고(기본값 폴백), CTA는 로그인 여부로 분기.
 export default async function HomePage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [
+    {
+      data: { user },
+    },
+    content,
+  ] = await Promise.all([supabase.auth.getUser(), getLandingContent()]);
 
-  return <LandingPage isAuthed={Boolean(user)} />;
+  return <LandingPage isAuthed={Boolean(user)} content={content} />;
 }

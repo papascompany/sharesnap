@@ -12,6 +12,25 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      // 랜딩 CMS 등 사이트 콘텐츠(key→jsonb 싱글톤). 마이그레이션 011.
+      site_content: {
+        Row: {
+          key: string;
+          value: Json;
+          updated_at: string;
+        };
+        Insert: {
+          key: string;
+          value?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          key?: string;
+          value?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       rooms: {
         Row: {
           id: string;
