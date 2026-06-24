@@ -104,6 +104,7 @@ export function usePhotos(roomId: string | undefined) {
     });
     try {
       await deletePhoto(photoId);
+      toast.success("사진을 삭제했어요.");
     } catch {
       setPhotos(snapshot);
       toast.error("사진 삭제에 실패했습니다.");

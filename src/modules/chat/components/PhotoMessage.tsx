@@ -1,9 +1,8 @@
 "use client";
 
-// 채팅 사진 메시지 — 실제 썸네일 표시 + 탭하면 방 갤러리로 이동 (Phase 3: photo 모듈 연동)
+// 채팅 사진 메시지 — 실제 썸네일 표시 + 탭하면 그 자리에서 사진 뷰어 오픈(삭제·포토북·코멘트)
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Images } from "lucide-react";
 import { cn, formatRelativeTime } from "@/modules/shared/lib/utils";
 import { Skeleton } from "@/modules/shared/components/Skeleton";
@@ -14,9 +13,16 @@ interface PhotoMessageProps {
   photoId: string | null;
   createdAt: string;
   isMine: boolean;
+  /** 썸네일 탭 → 채팅방 내 사진 뷰어 오픈 (ChatRoom이 사진 목록에서 해당 사진을 찾아 연다) */
+  onOpen?: (photoId: string) => void;
 }
 
-export function PhotoMessage({ photoId, createdAt, isMine }: PhotoMessageProps) {
+export function PhotoMessage({
+  photoId,
+  createdAt,
+  isMine,
+  onOpen,
+}: PhotoMessageProps) {
   const [photo, setPhoto] = useState<Photo | null>(null);
   // photoId가 없으면(원본 삭제로 FK가 NULL) 로드할 것이 없음
   const [isLoading, setIsLoading] = useState<boolean>(Boolean(photoId));
@@ -56,9 +62,10 @@ export function PhotoMessage({ photoId, createdAt, isMine }: PhotoMessageProps) 
       {isLoading ? (
         <Skeleton className={thumbClass} />
       ) : photo?.thumbnailUrl ? (
-        <Link
-          href={`/rooms/${photo.room_id}/photos`}
-          aria-label="갤러리에서 사진 보기"
+        <button
+          type="button"
+          onClick={() => photoId && onOpen?.(photoId)}
+          aria-label="사진 크게 보기"
           className={cn(thumbClass, "transition-opacity active:opacity-80")}
         >
           {/* Supabase Storage 원격 이미지 — next/image 원격 패턴 미설정으로 img 사용 */}
@@ -69,7 +76,7 @@ export function PhotoMessage({ photoId, createdAt, isMine }: PhotoMessageProps) 
             loading="lazy"
             className="absolute inset-0 size-full object-cover"
           />
-        </Link>
+        </button>
       ) : (
         <div
           className={cn(

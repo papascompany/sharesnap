@@ -11,9 +11,15 @@ import type { Message } from "@/modules/chat/types";
 interface MessageListProps {
   messages: Message[];
   isLoading?: boolean;
+  /** 사진 메시지 탭 → 채팅방 내 뷰어 오픈 */
+  onPhotoOpen?: (photoId: string) => void;
 }
 
-export function MessageList({ messages, isLoading }: MessageListProps) {
+export function MessageList({
+  messages,
+  isLoading,
+  onPhotoOpen,
+}: MessageListProps) {
   const { user } = useAuth();
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -58,6 +64,7 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                 photoId={msg.photo_id}
                 createdAt={msg.created_at}
                 isMine={isMine}
+                onOpen={onPhotoOpen}
               />
             </li>
           );
