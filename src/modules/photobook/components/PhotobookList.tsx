@@ -125,7 +125,11 @@ function PhotobookCard({ order }: { order: PhotobookOrderListItem }) {
 
   return (
     <Card className="gap-0 rounded-2xl p-4 ring-border/60">
-      <div className="flex items-start justify-between gap-3">
+      {/* 상단 정보 행 탭 → 주문 상세 (상태 타임라인·결제·배송 정보) */}
+      <Link
+        href={`/photobooks/${order.id}`}
+        className="flex items-start justify-between gap-3"
+      >
         <div className="min-w-0">
           <p className="line-clamp-1 break-keep text-[15px] font-semibold tracking-[-0.01em]">
             {order.roomName ? `${order.roomName} 포토북` : "포토북"}
@@ -149,7 +153,7 @@ function PhotobookCard({ order }: { order: PhotobookOrderListItem }) {
         <Badge className={`shrink-0 border-0 ${statusBadgeClass(order.status)}`}>
           {meta.label}
         </Badge>
-      </div>
+      </Link>
 
       <div className="mt-3 flex items-end justify-between gap-3">
         <div>
