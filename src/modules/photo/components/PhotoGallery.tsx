@@ -5,7 +5,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Images, LayoutGrid, Rows3 } from "lucide-react";
+import { ChevronLeft, Images, LayoutGrid, Printer, Rows3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tabs,
@@ -69,15 +69,27 @@ export function PhotoGallery({ roomId, roomName, shareCode }: PhotoGalleryProps)
               </p>
             </div>
           </div>
-          {/* 그리드/타임라인 토글 (design-system.md §5.4) */}
-          <TabsList className="mr-2 shrink-0">
-            <TabsTrigger value="grid" aria-label="그리드 보기">
-              <LayoutGrid className="size-4" aria-hidden />
-            </TabsTrigger>
-            <TabsTrigger value="timeline" aria-label="타임라인 보기">
-              <Rows3 className="size-4" aria-hidden />
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex shrink-0 items-center gap-0.5">
+            {/* 인화 주문 진입 — 이 방 사진으로 바로 시작 (/print/new?room=) */}
+            {photos.length > 0 ? (
+              <Link
+                href={`/print/new?room=${roomId}`}
+                aria-label="이 방 사진으로 인화 주문"
+                className="grid size-11 place-items-center text-foreground transition-transform active:scale-90"
+              >
+                <Printer className="size-5" strokeWidth={1.8} aria-hidden />
+              </Link>
+            ) : null}
+            {/* 그리드/타임라인 토글 (design-system.md §5.4) */}
+            <TabsList className="mr-2 shrink-0">
+              <TabsTrigger value="grid" aria-label="그리드 보기">
+                <LayoutGrid className="size-4" aria-hidden />
+              </TabsTrigger>
+              <TabsTrigger value="timeline" aria-label="타임라인 보기">
+                <Rows3 className="size-4" aria-hidden />
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </header>
 
         {isEmpty ? (
