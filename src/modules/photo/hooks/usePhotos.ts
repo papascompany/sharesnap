@@ -95,8 +95,8 @@ export function usePhotos(roomId: string | undefined) {
     };
   }, [roomId]);
 
-  /** 사진 삭제 — 낙관적 제거, 실패 시 복원 */
-  const remove = useCallback(async (photoId: string) => {
+  /** 사진 삭제 — 낙관적 제거, 실패 시 복원. 성공 여부 반환(호출측 후속 갱신용) */
+  const remove = useCallback(async (photoId: string): Promise<boolean> => {
     let snapshot: Photo[] = [];
     setPhotos((prev) => {
       snapshot = prev;
@@ -105,9 +105,11 @@ export function usePhotos(roomId: string | undefined) {
     try {
       await deletePhoto(photoId);
       toast.success("사진을 삭제했어요.");
+      return true;
     } catch {
       setPhotos(snapshot);
       toast.error("사진 삭제에 실패했습니다.");
+      return false;
     }
   }, []);
 

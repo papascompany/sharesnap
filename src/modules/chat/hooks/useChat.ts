@@ -37,6 +37,11 @@ export function useChat(roomId: string | undefined) {
     });
   }, []);
 
+  // 사진 삭제(FK SET NULL) 등 row 갱신을 다른 참여자 화면에도 즉시 반영
+  const handleUpdate = useCallback((msg: Message) => {
+    setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, ...msg } : m)));
+  }, []);
+
   const handleDelete = useCallback((messageId: string) => {
     setMessages((prev) => prev.filter((m) => m.id !== messageId));
   }, []);
@@ -44,8 +49,20 @@ export function useChat(roomId: string | undefined) {
   useRealtimeMessages({
     roomId,
     onInsert: handleInsert,
+    onUpdate: handleUpdate,
     onDelete: handleDelete,
   });
+
+  /**
+   * 사진 삭제 직후 낙관적 반영 — 해당 사진을 참조하는 말풍선을 즉시 "삭제된 사진"으로.
+   * DB는 FK ON DELETE SET NULL로 photo_id를 비우지만, 삭제 실행자 본인 화면은
+   * Realtime UPDATE 왕복을 기다리지 않고 바로 갱신한다.
+   */
+  const markPhotoDeleted = useCallback((photoId: string) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.photo_id === photoId ? { ...m, photo_id: null } : m)),
+    );
+  }, []);
 
   const send = useCallback(
     async (input: Omit<SendMessageInput, "roomId">) => {
@@ -57,5 +74,5 @@ export function useChat(roomId: string | undefined) {
     [roomId, handleInsert],
   );
 
-  return { messages, isLoading, error, send };
+  return { messages, isLoading, error, send, markPhotoDeleted };
 }

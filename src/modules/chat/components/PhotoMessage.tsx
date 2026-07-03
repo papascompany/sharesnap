@@ -27,6 +27,15 @@ export function PhotoMessage({
   // photoId가 없으면(원본 삭제로 FK가 NULL) 로드할 것이 없음
   const [isLoading, setIsLoading] = useState<boolean>(Boolean(photoId));
 
+  // photoId 변경(특히 삭제로 NULL화) 시 이미 로드된 썸네일을 버리고 리셋
+  // — React 공식 "adjusting state when props change" 렌더 중 prev 비교 패턴
+  const [prevPhotoId, setPrevPhotoId] = useState(photoId);
+  if (photoId !== prevPhotoId) {
+    setPrevPhotoId(photoId);
+    setPhoto(null);
+    setIsLoading(Boolean(photoId));
+  }
+
   useEffect(() => {
     if (!photoId) return;
     let cancelled = false;

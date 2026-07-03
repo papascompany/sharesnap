@@ -39,8 +39,8 @@ interface PhotoViewerProps {
   onClose: () => void;
   /** 포토북 선택 토글 (낙관적 — usePhotos.toggleSelection) */
   onToggleSelection: (photoId: string, value: boolean) => void | Promise<void>;
-  /** 사진 삭제 (낙관적 — usePhotos.remove). 본인 사진에만 노출 */
-  onDelete: (photoId: string) => void | Promise<void>;
+  /** 사진 삭제 (낙관적 — usePhotos.remove, 성공 여부 반환 가능). 본인 사진에만 노출 */
+  onDelete: (photoId: string) => void | Promise<unknown>;
 }
 
 export function PhotoViewer({

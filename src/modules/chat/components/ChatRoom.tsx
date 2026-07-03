@@ -12,10 +12,17 @@ interface ChatRoomProps {
 }
 
 export function ChatRoom({ roomId }: ChatRoomProps) {
-  const { messages, isLoading, error, send } = useChat(roomId);
+  const { messages, isLoading, error, send, markPhotoDeleted } =
+    useChat(roomId);
   // 채팅방에서 사진 탭 시 그 자리에서 뷰어를 열기 위한 사진 목록(삭제·포토북·코멘트 포함)
   const { photos, remove, toggleSelection } = usePhotos(roomId);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+
+  /** 뷰어 삭제 → 성공 시 해당 사진 말풍선도 즉시 "삭제된 사진"으로 */
+  const deleteAndSyncChat = async (photoId: string) => {
+    const ok = await remove(photoId);
+    if (ok) markPhotoDeleted(photoId);
+  };
 
   // 삭제 등으로 인덱스가 범위를 벗어나면 렌더 중 보정(effect 동기 setState 금지 룰 대응)
   if (viewerIndex !== null && viewerIndex >= photos.length) {
@@ -49,7 +56,7 @@ export function ChatRoom({ roomId }: ChatRoomProps) {
           onIndexChange={setViewerIndex}
           onClose={() => setViewerIndex(null)}
           onToggleSelection={toggleSelection}
-          onDelete={remove}
+          onDelete={deleteAndSyncChat}
         />
       ) : null}
     </div>
