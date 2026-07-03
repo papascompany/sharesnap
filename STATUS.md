@@ -6,12 +6,12 @@
 ## 현재 상태
 
 ```
-CURRENT_PHASE    : Phase 5/6 상업화 레이어 구현(트랙B) — 토스페이먼츠 결제·체크아웃·인화주문(M7)·관리자 대시보드(M9) 코드 완성. 다음: 운영 마이그012 SQL + 토스 키 등록 → 배포 → 결제 실 E2E
-PROGRESS         : Phase 1~4 완료 + 상업화 스파인(결제/포토북·인화 체크아웃/인화주문/관리자) 코드 완성 / 전체 ~75% (결제 실 E2E·포토북 파이프라인 prod 마감 잔여)
-LAST_SESSION     : 2026-06-24 (세션 #9, 상업화 트랙B + 랜딩 본문 CMS 트랙C 병렬)
-LAST_ACTION      : [트랙B] payments 테이블(마이그012)+포토북 배송컬럼 / 토스 결제: paymentServer(금액 서버산출·confirm Basic인증)+tossWidget/daumPostcode 로더+CheckoutForm/ShippingAddressForm+/api/payments/{checkout,confirm,fail,webhook} / 포토북 체크아웃 /photobooks/[id]/checkout+PhotobookList 주문하기 / 인화주문 M7(print-order 모듈+사진선택 Creator+/print/new·/print/[id]/checkout)+주문 탭(포토북/인화)+결제결과 토스트 / 관리자 M9 /admin·/admin/orders(service-role 통합조회·상태변경)+AdminDenied 게이트. [트랙C] 랜딩 섹션 본문(불릿·카드·FAQ) CMS화+어드민 편집 확장+OG 도메인 갱신. tsc0/lint0/next build 성공(36 routes). commit f57cc06 push(main 0/0).
-BUILD_STATUS     : ✅ 로컬 build + `vercel --prod` 배포 완료 (2026-06-24 #9, sharesnap-three.vercel.app READY, 최신 cac8de7). 마이그012 운영 적용됨(사용자 확인). 이후 채팅방 사진 삭제 UX 수정 배포(cac8de7). main 0/0.
-BLOCKED_BY       : ① ✅해결 마이그012 운영 적용 완료(사용자 확인). ② **토스 키(NEXT_PUBLIC_TOSS_CLIENT_KEY·TOSS_SECRET_KEY) 운영 env 미등록 확인됨(env pull) → 결제 graceful 비활성(체크아웃 배송폼·주문은 작동, 결제버튼만 비활성). 키 등록+재배포하면 즉시 활성.** ③ 정가표 placeholder(PHOTOBOOK_PRICES/PRINT_PRICES — 운영자 확정). ④ 포토북 파이프라인 prod 마감(트랙A: Storige webhook allowlist) 잔여. ⑤ 카카오 앱키·Realtime publication 확인.
+CURRENT_PHASE    : Phase 5/6 상업화 마감 — 주문 UX 3종(채팅 실시간 삭제 반영·갤러리 인화 진입점·포토북 주문 상세) 라이브. 다음: 토스 키 등록 → 결제 실 E2E
+PROGRESS         : Phase 1~4 완료 + 상업화 스파인 + 주문 UX(상세·진입점) / 전체 ~78% (결제 실 E2E·포토북 파이프라인 prod 마감 잔여)
+LAST_SESSION     : 2026-07-03 (세션 #10, 주문 UX 코드 3종 — 외부 키 불필요 트랙)
+LAST_ACTION      : ①채팅 사진 실시간 삭제 반영 — messages UPDATE Realtime 구독(FK SET NULL 감지)+markPhotoDeleted 낙관적 반영+PhotoMessage photoId 변경 리셋+usePhotos.remove 성공여부 반환. ②갤러리 헤더 인화 진입점(Printer→/print/new?room=). ③포토북 주문 상세 /photobooks/[id](요약·배송 타임라인·결제정보 payments RLS 조회·배송지·상태별 액션)+목록 카드 탭→상세. tsc0/lint0/build 성공(37 routes). commit b32d298·63b56d9·40763a9 push(main 0/0).
+BUILD_STATUS     : ✅ 로컬 build + `vercel --prod` 배포 완료 (2026-07-03 #10, sharesnap-three.vercel.app READY, 빌드 로그에 ƒ /photobooks/[id] 확인, 최신 40763a9). main 0/0.
+BLOCKED_BY       : ① **토스 키(NEXT_PUBLIC_TOSS_CLIENT_KEY·TOSS_SECRET_KEY) 운영 env 미등록 → 결제 graceful 비활성(체크아웃 배송폼·주문은 작동, 결제버튼만 비활성). 키 등록+재배포하면 즉시 활성.** ② 정가표 placeholder(PHOTOBOOK_PRICES/PRINT_PRICES — 운영자 확정). ③ 포토북 파이프라인 prod 마감(트랙A: Storige webhook allowlist) 잔여. ④ 카카오 앱키. ⑤ Realtime publication(messages·photos) 확인 — **채팅 실시간 삭제 반영(세션#10)은 messages UPDATE 이벤트가 publication에 포함돼야 타 참여자 화면에 동작**(삭제 실행자 본인 화면은 낙관적 반영이라 무관).
 ```
 
 ## 로컬 테스트 환경 (세션 #3 구축)
@@ -44,16 +44,19 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 ```bash
 # 작업 디렉토리: /Users/yohan/Developer/claude/Sharesnap  ← 정본
 #
-# ★최우선 [결제 활성화 — 토스 키만 남음] 코드·DB·배포 완료(commit 4644a12, sharesnap-three 라이브).
-#   ✅ 1. 마이그012 운영 적용 완료(사용자 확인)
-#   ✅ 3. vercel --prod 배포 완료(신규 라우트 라이브: orders/print/admin 등)
-#   ☐ 2. (운영자) Vercel env(Production)에 토스 키 등록 후 재배포 → 결제 즉시 활성:
+# ★최우선 [결제 활성화 — 토스 키만 남음] 코드·DB·배포 완료(최신 40763a9, sharesnap-three 라이브).
+#   ☐ (운영자) Vercel env(Production)에 토스 키 등록 후 재배포 → 결제 즉시 활성:
 #        NEXT_PUBLIC_TOSS_CLIENT_KEY=<토스 클라이언트키>   (빌드 인라인 → 재배포 필수)
 #        TOSS_SECRET_KEY=<토스 시크릿키>                   (서버 전용)
 #        등록 후: vercel --prod (재배포)
 #        토스 webhook URL도 개발자센터 등록: https://sharesnap-three.vercel.app/api/payments/webhook
 #   → 검증: 포토북 confirmed/pdf_ready 주문 "주문하기" → 배송지 → 토스 테스트결제
 #           → /api/payments/confirm → status=paid + payments.paid + /admin/orders 노출
+#           → 신규 주문 상세(/photobooks/[id])에서 결제정보·배송 타임라인 표시 확인
+#
+# [Realtime publication — 운영 확인] Supabase 대시보드 → Database → Publications:
+#   supabase_realtime에 messages·photos가 INSERT/UPDATE/DELETE 포함으로 등록돼 있는지 확인.
+#   세션#10 채팅 실시간 삭제 반영은 messages UPDATE 이벤트 필요(타 참여자 화면).
 #
 # [정가 확정 — 운영자] PHOTOBOOK_PRICES(photobook/utils/pricing.ts) / PRINT_PRICES(print-order/utils/pricing.ts)
 #   둘 다 placeholder. 실제 원가·마진 반영해 값만 교체(가격 구조는 확정).
@@ -64,12 +67,11 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 #   A2. prod 편집완료 → /api/storige/compose → webhook 수신 → pdf_ready + pdfs 버킷 PDF 확인
 #
 # [상업화 후속 — 코드]
-#   - 토스 webhook URL(/api/payments/webhook) 토스 개발자센터 등록(결제 사후 동기화)
+#   - 인화 주문 상세 페이지(/print/[id]) — 포토북 상세(/photobooks/[id]) 패턴 재사용
 #   - 관리자 리소스 CRUD(editor_resources) — 현재 admin은 주문+랜딩만
-#   - 인화 진입점을 공유방 갤러리에도 추가(현재 /orders 헤더 + /print/new)
 #   - 배송비/무료배송 임계, 수량 할인 등 가격정책 고도화
 #
-# [외부 잔여] 카카오 앱키(NEXT_PUBLIC_KAKAO_JS_KEY + Supabase Auth Kakao Provider) / Realtime publication(messages·photos)
+# [외부 잔여] 카카오 앱키(NEXT_PUBLIC_KAKAO_JS_KEY + Supabase Auth Kakao Provider)
 # [검증] npx tsc --noEmit && npm run lint && npm run build
 ```
 
@@ -228,6 +230,7 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 | 2026-06-24 | #8 | 랜딩 CMS 마무리 | 어드민 게이트 UX 개선(로그인-비어드민은 404 대신 현재이메일+재로그인 안내+로그아웃, commit 355ade2). ADMIN_EMAILS=yohan73@gmail.com 확정. **운영자 마이그011 SQL 적용 완료 + yohan73 로그인 완료 → 랜딩 CMS 완전 활성화(/admin/landing 편집·저장 동작)**. 비어드민 안내 라이브 캡처 검증 | ✅ | ~25m |
 | 2026-06-24 | #9 | 배포 + 피드백 수정 | 마이그012 운영적용(사용자) 후 `vercel --prod` 배포(sharesnap-three READY). 사용자 피드백 2건 처리: ①"채팅방 올린 사진 삭제 UI 없음" — 원인=채팅 사진 탭이 갤러리 이동만(삭제는 갤러리 뷰어에만 존재). PhotoMessage Link→onOpen + ChatRoom에 usePhotos+PhotoViewer 통합 → 채팅방에서 사진 탭 시 그 자리 뷰어(본인사진 우하단 휴지통 삭제)+삭제 성공 토스트(cac8de7 배포). ②"매직링크 부담"=카카오 1탭이 메인 설계, 카카오 앱키 미설정이 원인(운영 잔여)임을 안내. tsc0/lint0/build. | ✅ | ~30m |
 | 2026-06-24 | #9 | 상업화(B)+랜딩본문(C) 병렬 | **트랙B(메인)**: 토스페이먼츠 결제 풀스택 — payments 테이블(마이그012)+포토북 배송컬럼 / paymentServer(금액 서버산출·confirm Basic인증)+tossWidget/daumPostcode 동적로드+CheckoutForm/ShippingAddressForm+/api/payments/{checkout,confirm,fail,webhook} / 포토북 체크아웃 /photobooks/[id]/checkout+PhotobookList 주문하기 / **인화주문 M7**(print-order 모듈 pricing/service/hooks+사진선택 Creator+/print/new·/print/[id]/checkout)+주문 탭(포토북/인화)+결제결과 토스트 / **관리자 M9** /admin·/admin/orders(service-role 통합조회·상태변경)+AdminDenied 게이트. **트랙C(백그라운드 서브에이전트)**: 랜딩 섹션 본문(불릿·카드·FAQ 9종) LandingContent 승격+어드민 편집 확장+OG 도메인(sharesnap-three) 갱신+사진1슬롯 교체. 금액은 전부 서버 권위 산출(클라 위변조 방지). tsc0/lint0/next build 성공(36 routes). commit f57cc06 push(main 0/0). ⚠운영 마이그012 SQL+토스키+vercel --prod 배포 잔여 | ✅ | ~90m |
+| 2026-07-03 | #10 | 주문 UX 3종 | ①채팅 사진 실시간 삭제 반영 — messages UPDATE Realtime 구독(FK SET NULL)+markPhotoDeleted 낙관적 반영+PhotoMessage 리셋 패턴+remove 성공여부 반환 ②갤러리 헤더 인화 진입점(Printer→/print/new?room=, 사진 있을 때만) ③포토북 주문 상세 /photobooks/[id](요약·paid→delivered 타임라인·payments 결제정보·배송지·상태별 액션)+목록 카드 탭→상세. tsc0/lint0/build(37 routes), 3커밋(b32d298·63b56d9·40763a9) push, vercel --prod READY(빌드 로그 라우트 확인) | ✅ | ~25m |
 | 2026-06-23 | #7 | 루트 랜딩페이지 | 디자인 워크플로우(3컨셉 병렬→심사·합성 블루프린트)로 인스타 타깃 CTA 최적화 랜딩 구축. 라우팅: (main)/page.tsx(→/rooms) 제거+app/page.tsx 공개 랜딩(서버 getUser CTA 분기). 섹션: 히어로(선셋+폴라로이드)·감정훅·3단계·가치벤토·소셜콜라주(bento)·포토북 3D목업·바이럴(카톡 초대 목업)·FAQ·파이널CTA·푸터+스크롤인지 스티키CTA. 디자인토큰만(bg-sunset·코랄칩·글래스·다크), 카카오옐로 격리, 사진은 chart 그라데이션(가짜지표 0). next build 성공, 배포 Ready, 라이브 라이트/다크 캡처 검증(commit 0008d57) | ✅ | ~70m |
 
 ---
@@ -245,12 +248,12 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 ## 빌드/테스트 상태
 
 ```
-TypeScript   : ✅ tsc --noEmit pass (세션 #9, 상업화/랜딩 전체)
-ESLint       : ✅ 0 에러 0 경고 (세션 #9)
-Build        : ✅ 로컬 next build 성공 (2026-06-24 #9, 36 routes, load 여유 2.27). 배포는 마이그012 적용 후 vercel --prod
+TypeScript   : ✅ tsc --noEmit pass (세션 #10)
+ESLint       : ✅ 0 에러 0 경고 (세션 #10)
+Build        : ✅ 로컬 next build 성공 (2026-07-03 #10, 37 routes) + vercel --prod READY(빌드 로그에 ƒ /photobooks/[id])
 Unit Test    : N/A (Phase 7)
-E2E Test     : ✅ 포토북 편집 prod E2E(세션생성 200 + canvasData). 결제 실 E2E는 마이그012+토스키+배포 후 (코드만 완성)
-마지막 검증  : 2026-06-24 로컬 build 36 routes (세션 #9). 결제 흐름 실 검증은 운영 적용 후
+E2E Test     : ✅ 포토북 편집 prod E2E(세션생성 200 + canvasData). 결제 실 E2E는 토스키 등록 후 (코드만 완성). 채팅 실시간 삭제 타참여자 반영은 Realtime publication(messages UPDATE) 확인 후 실검증
+마지막 검증  : 2026-07-03 로컬 build 37 routes + prod 배포 라우트 확인 (세션 #10)
 ```
 
 ---
