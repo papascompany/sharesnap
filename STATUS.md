@@ -6,12 +6,12 @@
 ## 현재 상태
 
 ```
-CURRENT_PHASE    : Phase 5/6 상업화 마감 — 주문 UX 3종(채팅 실시간 삭제 반영·갤러리 인화 진입점·포토북 주문 상세) 라이브. 다음: 토스 키 등록 → 결제 실 E2E
-PROGRESS         : Phase 1~4 완료 + 상업화 스파인 + 주문 UX(상세·진입점) / 전체 ~78% (결제 실 E2E·포토북 파이프라인 prod 마감 잔여)
-LAST_SESSION     : 2026-07-03 (세션 #10, 주문 UX 코드 3종 — 외부 키 불필요 트랙)
-LAST_ACTION      : ①채팅 사진 실시간 삭제 반영 — messages UPDATE Realtime 구독(FK SET NULL 감지)+markPhotoDeleted 낙관적 반영+PhotoMessage photoId 변경 리셋+usePhotos.remove 성공여부 반환. ②갤러리 헤더 인화 진입점(Printer→/print/new?room=). ③포토북 주문 상세 /photobooks/[id](요약·배송 타임라인·결제정보 payments RLS 조회·배송지·상태별 액션)+목록 카드 탭→상세. tsc0/lint0/build 성공(37 routes). commit b32d298·63b56d9·40763a9 push(main 0/0).
+CURRENT_PHASE    : 서비스 플로우 전면 감사 완료(세션 #11) — ⚠최상위 결론: 카톡 인앱에서 로그인 수단 0개 = 신규 참여 전환 구조적 0%. 최우선이 토스 키가 아니라 ①카카오 로그인 활성화 ②매직링크 템플릿/SMTP ③법적 페이지로 변경. 정본: docs/service-flow-audit.md
+PROGRESS         : Phase 1~4 완료 + 상업화 스파인 + 주문 UX / 전체 ~78% + 감사 기반 상용화 게이트 로드맵 확정(스프린트 1~3)
+LAST_SESSION     : 2026-07-11 (세션 #11, 비즈니스 로직·서비스 플로우 전면 검증 — 멀티에이전트 감사 49에이전트)
+LAST_ACTION      : 멀티에이전트 감사(사실수집 4트랙→5렌즈 비평→전건 적대검증, 지적 40건=CONFIRMED 29+PARTIAL 11+REFUTED 0) → docs/service-flow-audit.md 작성. P0 4계열: ①인앱 로그인 수단 0개(카카오 버튼=Supabase raw 400 데드엔드+인앱 매직링크 숨김) ②매직링크 크로스브라우저 실패(이메일 템플릿 /auth/confirm 미매핑)+내장 SMTP는 팀멤버만 발송 ③결제 법적요건 미비(약관/처리방침/환불경로 0) ④삭제 사진 공개 썸네일 3종 영구 잔존(DELETE RLS 부재). 코드 변경 없음(감사 전용).
 BUILD_STATUS     : ✅ 로컬 build + `vercel --prod` 배포 완료 (2026-07-03 #10, sharesnap-three.vercel.app READY, 빌드 로그에 ƒ /photobooks/[id] 확인, 최신 40763a9). main 0/0.
-BLOCKED_BY       : ① **토스 키(NEXT_PUBLIC_TOSS_CLIENT_KEY·TOSS_SECRET_KEY) 운영 env 미등록 → 결제 graceful 비활성(체크아웃 배송폼·주문은 작동, 결제버튼만 비활성). 키 등록+재배포하면 즉시 활성.** ② 정가표 placeholder(PHOTOBOOK_PRICES/PRINT_PRICES — 운영자 확정). ③ 포토북 파이프라인 prod 마감(트랙A: Storige webhook allowlist) 잔여. ④ 카카오 앱키. ⑤ Realtime publication(messages·photos) 확인 — **채팅 실시간 삭제 반영(세션#10)은 messages UPDATE 이벤트가 publication에 포함돼야 타 참여자 화면에 동작**(삭제 실행자 본인 화면은 낙관적 반영이라 무관).
+BLOCKED_BY       : ⚠우선순위 변경(감사 결과) — ① **카카오 로그인 활성화(최우선, 반나절 콘솔 작업)**: 인앱 로그인 수단 0개=신규 전환 0%. account_email 필수동의+Allow users without email OFF(계정 이산 방지). audit §2.2 체크리스트 8단계. ② **Supabase 대시보드 D0**: Magic Link 템플릿→/auth/confirm 교체 + 커스텀 SMTP(내장은 팀멤버만 발송 — 일반 사용자 매직링크 미발송 가능성). ③ **토스 키는 약관/처리방침+정가 확정(PRICING_CONFIRMED) 게이트 선행 없이 등록 금지** — 등록 순간 법적요건 미비+placeholder 가격으로 실판매 개시(audit P0-C). ④ 포토북 파이프라인 prod 마감(트랙A). ⑤ Realtime publication(messages UPDATE 포함) 확인.
 ```
 
 ## 로컬 테스트 환경 (세션 #3 구축)
@@ -230,6 +230,7 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 | 2026-06-24 | #8 | 랜딩 CMS 마무리 | 어드민 게이트 UX 개선(로그인-비어드민은 404 대신 현재이메일+재로그인 안내+로그아웃, commit 355ade2). ADMIN_EMAILS=yohan73@gmail.com 확정. **운영자 마이그011 SQL 적용 완료 + yohan73 로그인 완료 → 랜딩 CMS 완전 활성화(/admin/landing 편집·저장 동작)**. 비어드민 안내 라이브 캡처 검증 | ✅ | ~25m |
 | 2026-06-24 | #9 | 배포 + 피드백 수정 | 마이그012 운영적용(사용자) 후 `vercel --prod` 배포(sharesnap-three READY). 사용자 피드백 2건 처리: ①"채팅방 올린 사진 삭제 UI 없음" — 원인=채팅 사진 탭이 갤러리 이동만(삭제는 갤러리 뷰어에만 존재). PhotoMessage Link→onOpen + ChatRoom에 usePhotos+PhotoViewer 통합 → 채팅방에서 사진 탭 시 그 자리 뷰어(본인사진 우하단 휴지통 삭제)+삭제 성공 토스트(cac8de7 배포). ②"매직링크 부담"=카카오 1탭이 메인 설계, 카카오 앱키 미설정이 원인(운영 잔여)임을 안내. tsc0/lint0/build. | ✅ | ~30m |
 | 2026-06-24 | #9 | 상업화(B)+랜딩본문(C) 병렬 | **트랙B(메인)**: 토스페이먼츠 결제 풀스택 — payments 테이블(마이그012)+포토북 배송컬럼 / paymentServer(금액 서버산출·confirm Basic인증)+tossWidget/daumPostcode 동적로드+CheckoutForm/ShippingAddressForm+/api/payments/{checkout,confirm,fail,webhook} / 포토북 체크아웃 /photobooks/[id]/checkout+PhotobookList 주문하기 / **인화주문 M7**(print-order 모듈 pricing/service/hooks+사진선택 Creator+/print/new·/print/[id]/checkout)+주문 탭(포토북/인화)+결제결과 토스트 / **관리자 M9** /admin·/admin/orders(service-role 통합조회·상태변경)+AdminDenied 게이트. **트랙C(백그라운드 서브에이전트)**: 랜딩 섹션 본문(불릿·카드·FAQ 9종) LandingContent 승격+어드민 편집 확장+OG 도메인(sharesnap-three) 갱신+사진1슬롯 교체. 금액은 전부 서버 권위 산출(클라 위변조 방지). tsc0/lint0/next build 성공(36 routes). commit f57cc06 push(main 0/0). ⚠운영 마이그012 SQL+토스키+vercel --prod 배포 잔여 | ✅ | ~90m |
+| 2026-07-11 | #11 | 플로우 감사 | 비즈니스 로직·서비스 플로우 전면 검증(멀티에이전트: 사실 4트랙+5렌즈 비평+40건 전건 적대검증, API 오류/세션리밋 2회 재개로 완주) → docs/service-flow-audit.md. 결론: 설계방향 유효(스냅스 공동포토북 2026-02 런칭=시장 검증), 치명 결함=인앱 로그인 0개·매직링크 템플릿 미매핑·법적 페이지 부재·삭제 썸네일 잔존. 카카오 활성화 허들 소멸 확인(개인 개발자 당일 자가전환). 로드맵 D0/D1/스프린트1~3 확정. 코드 변경 0 | ✅ | ~80m |
 | 2026-07-03 | #10 | 주문 UX 3종 | ①채팅 사진 실시간 삭제 반영 — messages UPDATE Realtime 구독(FK SET NULL)+markPhotoDeleted 낙관적 반영+PhotoMessage 리셋 패턴+remove 성공여부 반환 ②갤러리 헤더 인화 진입점(Printer→/print/new?room=, 사진 있을 때만) ③포토북 주문 상세 /photobooks/[id](요약·paid→delivered 타임라인·payments 결제정보·배송지·상태별 액션)+목록 카드 탭→상세. tsc0/lint0/build(37 routes), 3커밋(b32d298·63b56d9·40763a9) push, vercel --prod READY(빌드 로그 라우트 확인) | ✅ | ~25m |
 | 2026-06-23 | #7 | 루트 랜딩페이지 | 디자인 워크플로우(3컨셉 병렬→심사·합성 블루프린트)로 인스타 타깃 CTA 최적화 랜딩 구축. 라우팅: (main)/page.tsx(→/rooms) 제거+app/page.tsx 공개 랜딩(서버 getUser CTA 분기). 섹션: 히어로(선셋+폴라로이드)·감정훅·3단계·가치벤토·소셜콜라주(bento)·포토북 3D목업·바이럴(카톡 초대 목업)·FAQ·파이널CTA·푸터+스크롤인지 스티키CTA. 디자인토큰만(bg-sunset·코랄칩·글래스·다크), 카카오옐로 격리, 사진은 chart 그라데이션(가짜지표 0). next build 성공, 배포 Ready, 라이브 라이트/다크 캡처 검증(commit 0008d57) | ✅ | ~70m |
 
