@@ -236,21 +236,34 @@ export async function deletePhoto(photoId: string): Promise<void> {
   const row = data as PhotoRow;
 
   // Storage 제거 — 실패해도 DB 삭제는 진행 (DB가 단일 진실 소스, 고아 파일은 후속 정리)
-  // thumbnails 버킷 소속 3종: 썸네일 + 중간 + 인쇄용
+  // thumbnails 버킷 소속 3종: 썸네일 + 중간 + 인쇄용(3600px, 공개 URL)
+  // ⚠ Supabase Storage `.remove()`는 RLS 위반/부분 실패 시에도 reject하지 않고 { error }로 resolve한다.
+  //   → allSettled의 rejected만 보면 침묵 실패한다(감사 P0-D). error를 명시적으로 throw해 관측한다.
   const thumbnailPaths = [
     row.thumbnail_path,
     row.medium_path,
     row.print_path,
   ].filter((p): p is string => Boolean(p));
+
+  const removeFromBucket = async (
+    bucket: string,
+    paths: string[],
+  ): Promise<void> => {
+    if (paths.length === 0) return;
+    const { error: removeError } = await supabase.storage
+      .from(bucket)
+      .remove(paths);
+    if (removeError) throw removeError;
+  };
+
   const results = await Promise.allSettled([
-    supabase.storage.from(STORAGE_BUCKETS.PHOTOS).remove([row.storage_path]),
-    thumbnailPaths.length > 0
-      ? supabase.storage.from(STORAGE_BUCKETS.THUMBNAILS).remove(thumbnailPaths)
-      : Promise.resolve(),
+    removeFromBucket(STORAGE_BUCKETS.PHOTOS, [row.storage_path]),
+    removeFromBucket(STORAGE_BUCKETS.THUMBNAILS, thumbnailPaths),
   ]);
   results.forEach((r) => {
     if (r.status === "rejected") {
-      console.warn("사진 Storage 정리 실패:", r.reason);
+      // 공개 썸네일이 잔존하면 삭제한 사진이 URL로 계속 노출된다 — warn이 아닌 error로 승격
+      console.error("사진 Storage 정리 실패(공개 파일 잔존 가능):", r.reason);
     }
   });
 
