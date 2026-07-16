@@ -6,10 +6,10 @@ export const metadata = {
 
 interface LoginPageRouteProps {
   // Next 16: searchParams는 Promise — await 필요
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; error?: string }>;
 }
 
 export default async function Page({ searchParams }: LoginPageRouteProps) {
-  const { next } = await searchParams;
-  return <LoginPage next={next} />;
+  const { next, error } = await searchParams;
+  return <LoginPage next={next} error={error} />;
 }

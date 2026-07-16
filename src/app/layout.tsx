@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { ServiceWorkerRegister } from "@/modules/shared/components/ServiceWorkerRegister";
@@ -61,6 +62,8 @@ export default function RootLayout({
           <Toaster position="top-center" richColors />
           {/* PWA: Service Worker 등록 (production 한정, public/sw.js) */}
           <ServiceWorkerRegister />
+          {/* 퍼널 계측 — Vercel Web Analytics (ux-flows.md §5.4) */}
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>

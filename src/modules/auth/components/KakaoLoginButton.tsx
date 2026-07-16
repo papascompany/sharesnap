@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signInWithKakao } from "@/modules/auth/services/authService";
 import { useToast } from "@/modules/shared/hooks/useToast";
+import { track } from "@/modules/shared/lib/analytics";
 
 interface KakaoLoginButtonProps {
   /** 로그인 후 복귀 경로 (예: /join/{shareCode}?auto=1) — 초대 맥락 보존용 */
@@ -17,6 +18,7 @@ export function KakaoLoginButton({ next }: KakaoLoginButtonProps) {
   const handleClick = async () => {
     try {
       setIsLoading(true);
+      track("login_started", { method: "kakao" });
       await signInWithKakao(next);
       // OAuth 리디렉트가 발생하므로 이후 코드는 실행되지 않음
     } catch (err) {

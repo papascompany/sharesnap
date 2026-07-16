@@ -4,13 +4,16 @@
 // 비로그인: 방 정보로 신뢰 형성 → 카카오 CTA (next=/join/{code}?auto=1)
 // 로그인+비멤버: "참여하기" Primary CTA 1탭
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Images, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { KakaoLoginButton } from "@/modules/auth/components/KakaoLoginButton";
 import { joinRoomViaShareCode } from "@/modules/room/services/roomService";
 import { useToast } from "@/modules/shared/hooks/useToast";
+import { track } from "@/modules/shared/lib/analytics";
+import { KAKAO_LOGIN_ENABLED } from "@/modules/shared/lib/featureFlags";
 import type { RoomPreview as RoomPreviewData } from "@/modules/room/types";
 
 interface RoomPreviewProps {
@@ -29,6 +32,11 @@ export function RoomPreview({
   const { success, error: toastError } = useToast();
   const [isJoining, setIsJoining] = useState(false);
 
+  // 초대 미리보기 노출 — 퍼널 상단 계측 (ux-flows.md §5.4)
+  useEffect(() => {
+    track("join_viewed", { authed: isAuthenticated });
+  }, [isAuthenticated]);
+
   // 로그인 복귀 경로 — auto=1로 자동 입장 (ux-flows.md §1.4)
   const nextPath = `/join/${shareCode}?auto=1`;
 
@@ -36,6 +44,7 @@ export function RoomPreview({
     try {
       setIsJoining(true);
       const roomId = await joinRoomViaShareCode(shareCode);
+      track("join_completed", { via: "button" });
       success(`'${preview.name}'에 참여했어요`, {
         description: "사진을 올려보세요!",
       });
@@ -120,8 +129,22 @@ export function RoomPreview({
           >
             {isJoining ? "참여 중..." : "참여하기"}
           </Button>
-        ) : (
+        ) : KAKAO_LOGIN_ENABLED ? (
           <KakaoLoginButton next={nextPath} />
+        ) : (
+          // 카카오 로그인 미가동: 로그인 화면으로 보내 매직링크로 참여 (감사 P0-A — 수단 0개 방지)
+          <Link
+            href={`/login?next=${encodeURIComponent(nextPath)}`}
+            onClick={() => track("login_started", { method: "redirect" })}
+            className="block"
+          >
+            <Button
+              size="lg"
+              className="h-12 w-full rounded-xl text-base font-semibold"
+            >
+              로그인하고 참여하기
+            </Button>
+          </Link>
         )}
       </div>
     </div>

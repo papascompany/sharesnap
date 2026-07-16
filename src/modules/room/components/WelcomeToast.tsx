@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useToast } from "@/modules/shared/hooks/useToast";
+import { track } from "@/modules/shared/lib/analytics";
 
 interface WelcomeToastProps {
   /** 참여한 방 이름 — 환영 메시지에 노출 */
@@ -23,6 +24,8 @@ export function WelcomeToast({ roomName }: WelcomeToastProps) {
 
     shownRef.current = true;
     success(`'${roomName}'에 참여했어요!`);
+    // 참여 완료 — 퍼널 전환 계측 (auto=1 경로, ux-flows.md §5.4)
+    track("join_completed", { via: "auto" });
 
     // URL에서 welcome 파라미터 제거 — 새로고침/뒤로가기 시 재표시 방지
     params.delete("welcome");
