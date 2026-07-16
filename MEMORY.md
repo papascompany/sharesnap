@@ -147,6 +147,16 @@
 - **퍼널 계측**: @vercel/analytics + analytics.ts 래퍼(FunnelEvent 유니온 5종). track 지점 — join_viewed(RoomPreview mount), login_started(KakaoLoginButton/매직링크/RoomPreview redirect), join_completed(WelcomeToast auto + RoomPreview button), invite_shared(InviteLink copy/native + KakaoShareButton invite), first_photo_uploaded(PhotoUploader onAllDone). 카카오 활성화 전 기준선 확보 목적.
 - **미완(운영자 외부작업, BLOCKED_BY)**: 카카오 콘솔 활성화+env, Magic Link 이메일 템플릿→/auth/confirm 교체, 커스텀 SMTP, 마이그013 적용. 스프린트2(법적 게이트)·3(성장 레버)은 코드 대기.
 
+### ADR-015 (2026-07-11): 감사 후속 스프린트2 — 상용화 법적 게이트
+- **배경**: 감사(docs/service-flow-audit.md) P0-C·P1의 "결제 라이브 전 필수" 항목을 코드로 구현(세션#13).
+- **법적 페이지**: businessInfo.ts(사업자 정보 단일 소스, **placeholder — 운영자 실값 입력 필수, 미기재 시 화면 미표시로 허위기재 방지**) + /terms(이용약관, **제6조 사진 라이선스=방 멤버 제작 이용 허락**·제9조 주문제작 청약철회 제한) + /privacy(개인정보처리방침, 실 수집항목·위탁 Supabase/Vercel/토스/Storige·보유기간). LegalShell 공통 셸. 미들웨어 public route에 /terms·/privacy 추가. ⚠**법무 검토·사업자 실값은 운영자 오픈 전 작업**(코드는 표준 초안).
+- **결제 게이트(핵심)**: `isPricingConfirmed()` = `process.env.PRICING_CONFIRMED === "true"`(서버 env). **토스 키와 가격 확정을 별개 스위치로 분리** — getTossClientKey()가 미확정 시 ''반환→CheckoutForm "결제 준비 중" graceful + prepareCheckout이 서버에서 503 거부(클라 우회 방지). **결제 개시 = 사업자 실값+법무검토 AND PRICING_CONFIRMED=true AND 토스 키, 셋 다 충족 필요**.
+- **청약철회 고지**: CheckoutForm에 주문제작 청약철회 제한(전자상거래법 §17②) 사전 고지 + 필수 동의 체크박스(agreedWithdrawal, 미동의 시 canPay=false). 토스 위젯 renderAgreement(전자금융 동의)와 별개.
+- **사진 라이선스 고지**: 업로드 시트 1줄('멤버가 제작에 사용 가능') + 인화 주문(PrintOrderCreator)에서 선택분 중 `p.user_id !== user.id` 개수를 세어 "다른 멤버 사진 N장 포함" 표시(초상권/저작권 인지). 건별 동의 대신 업로드 시점 사전 라이선스(약관 §6) 방식.
+- **환불 경로**: `cancelPayment`(paymentServer, 토스 `/v1/payments/{key}/cancel` API) — **제작 착수 전 주문 status='paid'만 허용**, 성공 시 payments=canceled+주문 confirmed 롤백(웹훅 취소 동기화와 동일 최종상태). /api/admin/orders PATCH에 `action:"cancel"` 분기 + AdminOrdersClient 취소 버튼(paid만 노출, router.refresh). docs/refund-runbook.md(앱내 취소·토스 대시보드 웹훅 자동동기화·청약철회 제한 절차).
+- **교훈**: 웹훅(api/payments/webhook)이 이미 CANCELED→payments=canceled+주문 confirmed 롤백을 처리하므로, 토스 대시보드 수동 취소만으로도 DB 정합성 유지(감사 권고 "0줄 대책=runbook"). admin 취소 버튼은 즉시 반영 편의 기능. 주문 status에 명시적 'canceled' 값은 미추가(confirmed 롤백+payments.status로 판별) — 후속 과제.
+- **미완(운영자 외부작업)**: [[sharesnap-autopilot-style]] 참조. 사업자 실값·법무검토, PRICING_CONFIRMED, 토스 키+webhook, 카카오 활성화(ADR-014), 마이그013 적용.
+
 ### ADR-010: 디자인 시스템 — "추억을 모아 빛나게"
 - **결정일**: 2026-05-16 (상세: docs/design-system.md — 시각 결정의 단일 소스)
 - **결정**: Primary 선셋 코랄 oklch(0.655 0.19 32) + 앰버 그라데이션, 웜 뉴트럴, 다크모드=시네마 모드(웜 니어블랙, 사진 뷰어는 순수 블랙), Pretendard Variable(dynamic-subset CDN), radius 0.75rem, 모바일 CTA h-12
