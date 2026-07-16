@@ -4,7 +4,17 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/modules/shared/types/database";
 
 export const updateSession = async (request: NextRequest) => {
-  let supabaseResponse = NextResponse.next({ request });
+  // 서버 컴포넌트((main) 레이아웃 등)가 현재 경로를 알 수 있도록 요청 헤더에 pathname 주입
+  // → 레이아웃 이중 가드도 로그인 후 원래 자리로 복귀시킬 수 있다 (감사 세션#11).
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(
+    "x-pathname",
+    request.nextUrl.pathname + request.nextUrl.search,
+  );
+
+  let supabaseResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,7 +26,9 @@ export const updateSession = async (request: NextRequest) => {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          supabaseResponse = NextResponse.next({ request });
+          supabaseResponse = NextResponse.next({
+            request: { headers: requestHeaders },
+          });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );
@@ -54,7 +66,12 @@ export const updateSession = async (request: NextRequest) => {
 
   if (!user && !isAuthRoute && !isPublicRoute) {
     const url = request.nextUrl.clone();
+    // 원래 목적지를 next로 보존 → 로그인 후 그 자리로 복귀 (감사 세션#11: 재방문 복귀).
+    // 수신측(/auth/callback·/auth/confirm)이 '/' 시작·'//' 거부 검증을 이미 수행한다.
+    const nextTarget = pathname + request.nextUrl.search;
     url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("next", nextTarget);
     return NextResponse.redirect(url);
   }
 
