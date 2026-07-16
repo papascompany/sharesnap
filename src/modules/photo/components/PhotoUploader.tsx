@@ -31,6 +31,7 @@ import { usePhotoUpload } from "@/modules/photo/hooks/usePhotoUpload";
 import { buildFeedTemplate, shareKakaoFeed } from "@/modules/shared/lib/kakao";
 // useToast()는 매 렌더마다 새 객체 반환 — photo 모듈 공통 패턴대로 안정적 toast export 사용
 import { toast } from "@/modules/shared/hooks/useToast";
+import { track } from "@/modules/shared/lib/analytics";
 import { cn, formatBytes } from "@/modules/shared/lib/utils";
 import type { PhotoUploadResult, UploadStatus } from "@/modules/photo/types";
 
@@ -80,6 +81,8 @@ export function PhotoUploader({
     onAllDone: (results) => {
       if (results.length > 0) {
         toast.success(`사진 ${results.length}장을 올렸어요!`);
+        // 퍼널 하단 계측 — 참여 후 첫 기여(ux-flows.md §5.4)
+        track("first_photo_uploaded", { count: results.length });
         onUploaded?.(results);
       }
     },
@@ -115,7 +118,7 @@ export function PhotoUploader({
     !isUploading &&
     queue.every((item) => item.status === "done" || item.status === "error");
 
-  /** 업로드 완료 후 카카오 새 사진 알림 — 실패해도 업로드와 무관하므로 무시 */
+  /** 업로드 완료 후 카카오 새 사진 알림 — 실패 시 링크 복사로 유도(침묵 실패 금지, 감사 P1) */
   const handleShareToKakao = async () => {
     try {
       await shareKakaoFeed(
@@ -126,10 +129,17 @@ export function PhotoUploader({
           imageUrl: doneItems[0]?.photo?.thumbnailUrl ?? undefined,
         }),
       );
-    } catch (err) {
-      // 인앱 브라우저 미지원/SDK 로드 실패 등 — 조용히 넘어간다
-      console.warn("카카오 새 사진 알림 공유 실패:", err);
-    } finally {
+      closeSheet();
+    } catch {
+      // 재초대 루프가 조용히 죽지 않도록 — 링크 복사 폴백 안내
+      try {
+        await navigator.clipboard.writeText(
+          `${window.location.origin}/join/${shareCode}`,
+        );
+        toast.success("초대 링크를 복사했어요. 카톡방에 붙여넣어 알려주세요!");
+      } catch {
+        toast.error("카톡 공유에 실패했어요. 초대 화면에서 링크를 복사해 주세요.");
+      }
       closeSheet();
     }
   };

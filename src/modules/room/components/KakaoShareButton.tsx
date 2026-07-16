@@ -8,6 +8,7 @@ import {
   type FeedVariant,
 } from "@/modules/shared/lib/kakao";
 import { useToast } from "@/modules/shared/hooks/useToast";
+import { track } from "@/modules/shared/lib/analytics";
 
 interface KakaoShareButtonProps {
   shareCode: string;
@@ -50,8 +51,10 @@ export function KakaoShareButton({
           memberCount,
         }),
       );
-    } catch (err) {
-      toastError(err instanceof Error ? err.message : "카카오 공유 실패");
+      if (variant === "invite") track("invite_shared", { via: "kakao" });
+    } catch {
+      // 개발자용 env 에러 원문 노출 금지 — 사용자 언어로 안내 (감사 P1)
+      toastError("카카오 공유를 사용할 수 없어요. 링크 복사를 이용해 주세요.");
     } finally {
       setIsLoading(false);
     }
