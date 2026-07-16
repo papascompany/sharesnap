@@ -137,6 +137,16 @@
 - **적용 잔여(운영자)**: ① 마이그012 SQL(운영 프로젝트 rtnfltwmnizkjrrgjudk는 MCP 토큰 계정 밖 → Supabase SQL Editor 수동) ② 토스 키 env(NEXT_PUBLIC_TOSS_CLIENT_KEY·TOSS_SECRET_KEY) ③ vercel --prod 배포 ④ 정가표(PHOTOBOOK_PRICES/PRINT_PRICES placeholder) 확정.
 - **교훈**: photoService/photobookService가 'use client'라 서버 컴포넌트(체크아웃 페이지)에서 toPhoto 사용 불가 → 서버/클라 공용 `thumbnailPublicUrl`(결정적 public URL 조립) 헬퍼 분리. next/image 원격패턴 미설정 컨벤션이라 썸네일은 `<img>`(no-img-element disable 주석).
 
+### ADR-014 (2026-07-11): 감사 후속 스프린트1 — 퍼널 가드 + 카카오 활성화 플래그
+- **배경**: 서비스 플로우 전면 감사(docs/service-flow-audit.md, 세션#11)의 P0 4계열·스프린트1 항목을 코드로 구현(세션#12).
+- **핵심 결정 — 기능 플래그 2종(src/modules/shared/lib/featureFlags.ts, 빌드 인라인 NEXT_PUBLIC)**:
+  - `KAKAO_LOGIN_ENABLED` = `NEXT_PUBLIC_KAKAO_LOGIN_ENABLED === "true"`. **로그인은 Supabase OAuth라 공유용 JS키와 독립** — 클라가 Provider 설정을 런타임에 알 수 없어 명시적 플래그로 관리. 카카오 콘솔+Supabase Provider 설정 후 이 env를 true로 켜야 카카오 로그인 버튼 노출. 미설정(false)이면 LoginPage가 인앱에서도 매직링크 폼 노출 + RoomPreview 비로그인 CTA가 `/login?next=` 링크로 폴백 → **"어떤 (인앱×Provider) 조합에서도 실동작 로그인 수단 ≥1개" 불변식**(감사 P0-A: 인앱+Provider미설정=수단 0개 해소).
+  - `KAKAO_SHARE_ENABLED` = `Boolean(NEXT_PUBLIC_KAKAO_JS_KEY)`. 미설정 시 InviteLink에서 카카오 공유 버튼 숨김+링크복사 primary 승격(개발자용 env 에러 원문 토스트 방지).
+- **세션 next 보존**: 미들웨어(middleware.ts)가 로그인 리다이렉트에 `next=pathname+search` 부착 + `x-pathname` 요청헤더 주입 → (main)레이아웃 이중가드도 headers()로 next 복귀. AuthGuard는 usePathname 기반으로 재작성 후 (main) 셸에 마운트(SPA 체류 중 만료 감지, 초기엔 낙관적 children). 수신측(/auth/callback·confirm)의 '/' 시작·'//' 거부 검증 재사용.
+- **삭제 파기(마이그013)**: thumbnails 버킷 DELETE RLS(본인폴더 foldername[1]=uid) + print_orders draft delete 정책. **교훈: Supabase Storage `.remove()`는 RLS 위반에도 reject 않고 `{error}`로 resolve** → allSettled rejected만 보면 침묵. removeFromBucket 헬퍼가 error를 throw해 관측(warn→error 승격). ⚠운영 SQL Editor 수동 적용 필요 + 고아 썸네일 1회 정리(013 주석의 SELECT 확인 후 DELETE).
+- **퍼널 계측**: @vercel/analytics + analytics.ts 래퍼(FunnelEvent 유니온 5종). track 지점 — join_viewed(RoomPreview mount), login_started(KakaoLoginButton/매직링크/RoomPreview redirect), join_completed(WelcomeToast auto + RoomPreview button), invite_shared(InviteLink copy/native + KakaoShareButton invite), first_photo_uploaded(PhotoUploader onAllDone). 카카오 활성화 전 기준선 확보 목적.
+- **미완(운영자 외부작업, BLOCKED_BY)**: 카카오 콘솔 활성화+env, Magic Link 이메일 템플릿→/auth/confirm 교체, 커스텀 SMTP, 마이그013 적용. 스프린트2(법적 게이트)·3(성장 레버)은 코드 대기.
+
 ### ADR-010: 디자인 시스템 — "추억을 모아 빛나게"
 - **결정일**: 2026-05-16 (상세: docs/design-system.md — 시각 결정의 단일 소스)
 - **결정**: Primary 선셋 코랄 oklch(0.655 0.19 32) + 앰버 그라데이션, 웜 뉴트럴, 다크모드=시네마 모드(웜 니어블랙, 사진 뷰어는 순수 블랙), Pretendard Variable(dynamic-subset CDN), radius 0.75rem, 모바일 CTA h-12
