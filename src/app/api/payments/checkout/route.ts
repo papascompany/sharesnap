@@ -63,7 +63,12 @@ export async function POST(request: NextRequest) {
 
     const result = await prepareCheckout(user.id, user.email ?? null, input);
     if (!result.ok) {
-      const status = result.code === "ORDER_NOT_FOUND" ? 404 : 500;
+      const status =
+        result.code === "ORDER_NOT_FOUND"
+          ? 404
+          : result.code === "PRICING_UNCONFIRMED"
+            ? 503 // 가격 미확정 — 결제 준비 중
+            : 500;
       return NextResponse.json(
         { error: result.code, message: result.message },
         { status },

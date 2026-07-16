@@ -22,8 +22,21 @@ const TOSS_API = "https://api.tosspayments.com";
 /** 토스 미설정 시 라우트가 503으로 응답할 에러 코드 */
 export const TOSS_NOT_CONFIGURED = "TOSS_NOT_CONFIGURED";
 
-/** 클라이언트 위젯용 키(브라우저 노출 가능). 미설정 시 "". */
+/**
+ * 가격 정책 확정 여부 — 토스 키가 있어도 이게 true가 아니면 판매 개시 금지 (감사 P0-C).
+ * '결제 활성화(토스 키)'와 '가격 확정'이라는 별개 의사결정을 분리해, 키만 넣으면
+ * placeholder 가격으로 실판매가 시작되는 사고를 막는다. 운영 env PRICING_CONFIRMED=true로 개시.
+ */
+export function isPricingConfirmed(): boolean {
+  return process.env.PRICING_CONFIRMED === "true";
+}
+
+/**
+ * 클라이언트 위젯용 키(브라우저 노출 가능). 미설정 또는 가격 미확정 시 "".
+ * 빈 문자열이면 CheckoutForm이 "결제 준비 중" graceful 분기로 표시된다.
+ */
 export function getTossClientKey(): string {
+  if (!isPricingConfirmed()) return "";
   return process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY || "";
 }
 
@@ -114,7 +127,7 @@ interface PrepareCheckoutResult {
 }
 interface PrepareCheckoutError {
   ok: false;
-  code: "ORDER_NOT_FOUND" | "EMPTY_AMOUNT" | "SERVER_ERROR";
+  code: "ORDER_NOT_FOUND" | "EMPTY_AMOUNT" | "SERVER_ERROR" | "PRICING_UNCONFIRMED";
   message: string;
 }
 
@@ -127,6 +140,15 @@ export async function prepareCheckout(
   userEmail: string | null,
   input: CheckoutInput,
 ): Promise<PrepareCheckoutResult | PrepareCheckoutError> {
+  // 서버 방어: 가격 미확정이면 청구 자체를 거부(클라이언트 우회 방지, 감사 P0-C)
+  if (!isPricingConfirmed()) {
+    return {
+      ok: false,
+      code: "PRICING_UNCONFIRMED",
+      message: "결제 준비 중이에요. 잠시 후 다시 시도해 주세요.",
+    };
+  }
+
   const admin = createServiceRoleClient();
   if (!admin) {
     return { ok: false, code: "SERVER_ERROR", message: "SERVICE_ROLE 미설정" };
@@ -379,4 +401,94 @@ export async function finalizePayment(params: {
     orderKind: payment.order_kind,
     orderId: payment.order_id,
   };
+}
+
+// ============================================================
+// 결제 취소(환불) — 관리자
+// ============================================================
+
+export interface CancelResult {
+  ok: boolean;
+  message?: string;
+}
+
+/**
+ * 관리자 결제 취소: 토스 취소 API 호출 → payments=canceled + 주문 롤백(confirmed).
+ * 제작 착수(주문 status=paid) 전에만 허용 — printing 이후에는 거부(약관 §9 청약철회 제한과 정합).
+ * 웹훅의 취소 동기화와 동일한 최종 상태를 만든다(즉시 반영용).
+ */
+export async function cancelPayment(params: {
+  orderKind: OrderKind;
+  orderId: string;
+  reason: string;
+}): Promise<CancelResult> {
+  const secret = getTossSecretKey();
+  if (!secret) return { ok: false, message: "결제 연동이 설정되지 않았어요." };
+  const admin = createServiceRoleClient();
+  if (!admin) return { ok: false, message: "SERVICE_ROLE 미설정" };
+
+  const table =
+    params.orderKind === "photobook" ? "photobook_orders" : "print_orders";
+
+  // 제작 착수 전(status=paid)만 취소 허용
+  const { data: order } = await admin
+    .from(table)
+    .select("status")
+    .eq("id", params.orderId)
+    .maybeSingle();
+  if (!order) return { ok: false, message: "주문을 찾을 수 없어요." };
+  if (order.status !== "paid") {
+    return {
+      ok: false,
+      message: "결제 완료(제작 착수 전) 상태에서만 취소할 수 있어요.",
+    };
+  }
+
+  // 최신 paid 결제
+  const { data: payment } = await admin
+    .from("payments")
+    .select("id, payment_key")
+    .eq("order_kind", params.orderKind)
+    .eq("order_id", params.orderId)
+    .eq("status", "paid")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!payment?.payment_key) {
+    return { ok: false, message: "취소할 결제 정보를 찾을 수 없어요." };
+  }
+
+  // 토스 취소 API
+  const auth = Buffer.from(`${secret}:`).toString("base64");
+  const res = await fetch(
+    `${TOSS_API}/v1/payments/${payment.payment_key}/cancel`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cancelReason: params.reason || "관리자 취소" }),
+      cache: "no-store",
+    },
+  );
+  const data = (await res.json().catch(() => ({}))) as {
+    message?: string;
+    [k: string]: unknown;
+  };
+  if (!res.ok) {
+    return { ok: false, message: data.message ?? "토스 결제 취소에 실패했어요." };
+  }
+
+  // payments=canceled + 주문 롤백 (웹훅 취소 동기화와 동일)
+  await admin
+    .from("payments")
+    .update({ status: "canceled", raw: data as unknown as Json })
+    .eq("id", payment.id);
+  await admin
+    .from(table)
+    .update({ status: "confirmed", paid_at: null })
+    .eq("id", params.orderId);
+
+  return { ok: true };
 }

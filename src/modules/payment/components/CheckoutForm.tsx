@@ -32,6 +32,8 @@ export function CheckoutForm(props: CheckoutFormProps) {
   });
   const [widgetsReady, setWidgetsReady] = useState(false);
   const [busy, setBusy] = useState(false);
+  // 전자상거래법 §17② — 주문제작 상품 청약철회 제한 사전 고지·동의 (감사 P0-C)
+  const [agreedWithdrawal, setAgreedWithdrawal] = useState(false);
   const widgetsRef = useRef<TossWidgets | null>(null);
   const initedRef = useRef(false);
 
@@ -73,11 +75,20 @@ export function CheckoutForm(props: CheckoutFormProps) {
   const patch = (p: Partial<ShippingFormState>) =>
     setShipping((s) => ({ ...s, ...p }));
 
-  const canPay = tossConfigured && widgetsReady && isShippingValid(shipping) && !busy;
+  const canPay =
+    tossConfigured &&
+    widgetsReady &&
+    isShippingValid(shipping) &&
+    agreedWithdrawal &&
+    !busy;
 
   async function pay() {
     if (!isShippingValid(shipping)) {
       toast.error("받는 분·연락처·배송지를 모두 입력해 주세요.");
+      return;
+    }
+    if (!agreedWithdrawal) {
+      toast.error("주문 제작 및 청약철회 제한 안내에 동의해 주세요.");
       return;
     }
     const widgets = widgetsRef.current;
@@ -174,6 +185,46 @@ export function CheckoutForm(props: CheckoutFormProps) {
           </div>
         )}
       </section>
+
+      {/* 주문 제작·청약철회 제한 고지 + 동의 (전자상거래법 §17②, 감사 P0-C) */}
+      {tossConfigured ? (
+        <section className="rounded-2xl border border-border/60 bg-card p-5">
+          <h2 className="text-[15px] font-bold tracking-[-0.01em]">
+            주문 제작 안내
+          </h2>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-muted-foreground">
+            주문하신 상품은 회원님의 사진·주문 내용에 따라 개별 제작되는
+            주문제작 상품입니다. 「전자상거래 등에서의 소비자보호에 관한 법률」에
+            따라 <strong className="text-foreground">제작이 시작된 이후에는
+            청약철회(환불)가 제한</strong>됩니다. (제작 착수 전에는 취소·전액 환불
+            가능)
+          </p>
+          <label className="mt-3 flex cursor-pointer items-start gap-2.5">
+            <input
+              type="checkbox"
+              checked={agreedWithdrawal}
+              onChange={(e) => setAgreedWithdrawal(e.target.checked)}
+              className="mt-0.5 size-4 shrink-0 rounded border-border accent-primary"
+            />
+            <span className="text-[13px] leading-snug text-foreground">
+              위 주문 제작 및 청약철회 제한 내용을 확인했으며 이에 동의합니다.
+              <span className="text-primary"> (필수)</span>
+            </span>
+          </label>
+          <p className="mt-2.5 text-[12px] leading-relaxed text-muted-foreground">
+            자세한 내용은{" "}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              이용약관
+            </a>
+            을 확인해 주세요.
+          </p>
+        </section>
+      ) : null}
 
       {/* 하단 고정 결제 바 */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/90 px-4 py-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-xl">
