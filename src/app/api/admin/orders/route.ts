@@ -4,6 +4,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getAdmin } from "@/modules/admin/services/adminAuth";
 import { updateOrderStatus } from "@/modules/admin/services/adminOrders";
+import { cancelPayment } from "@/modules/payment/services/paymentServer";
+import type { OrderKind } from "@/modules/payment/types";
 
 const PHOTOBOOK_STATUSES = new Set([
   "draft",
@@ -36,13 +38,34 @@ export async function PATCH(request: NextRequest) {
     orderKind?: string;
     orderId?: string;
     status?: string;
+    action?: string;
+    reason?: string;
   };
 
   if (
     (body.orderKind !== "photobook" && body.orderKind !== "print") ||
-    typeof body.orderId !== "string" ||
-    typeof body.status !== "string"
+    typeof body.orderId !== "string"
   ) {
+    return NextResponse.json({ error: "INVALID_REQUEST" }, { status: 400 });
+  }
+
+  // 결제 취소(환불) — 토스 취소 API 호출 후 payments=canceled + 주문 롤백
+  if (body.action === "cancel") {
+    const result = await cancelPayment({
+      orderKind: body.orderKind as OrderKind,
+      orderId: body.orderId,
+      reason: typeof body.reason === "string" ? body.reason : "관리자 취소",
+    });
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: "CANCEL_FAILED", message: result.message },
+        { status: 400 },
+      );
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  if (typeof body.status !== "string") {
     return NextResponse.json({ error: "INVALID_REQUEST" }, { status: 400 });
   }
 

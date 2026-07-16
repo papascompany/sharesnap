@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { BookHeart, Printer, Loader2, Phone, MapPin } from "lucide-react";
+import { BookHeart, Printer, Loader2, Phone, MapPin, Undo2 } from "lucide-react";
 import { formatKRW } from "@/modules/photobook/utils/pricing";
 import { formatRelativeTime } from "@/modules/shared/lib/utils";
 import type { AdminOrder } from "@/modules/admin/types";
@@ -103,12 +104,46 @@ function SummaryCard({
 }
 
 function AdminOrderRow({ order }: { order: AdminOrder }) {
+  const router = useRouter();
   const [status, setStatus] = useState(order.status);
   const [savedStatus, setSavedStatus] = useState(order.status);
   const [saving, setSaving] = useState(false);
+  const [canceling, setCanceling] = useState(false);
   const dirty = status !== savedStatus;
   const options = order.kind === "photobook" ? PHOTOBOOK_STATUSES : PRINT_STATUSES;
   const Icon = order.kind === "photobook" ? BookHeart : Printer;
+  // 결제 취소 가능: 결제 완료 + 제작 착수(paid 상태) 전 (약관 §9 청약철회 제한과 정합)
+  const cancelable =
+    order.paymentStatus === "paid" && savedStatus === "paid";
+
+  async function cancelPay() {
+    if (
+      !window.confirm(
+        "이 주문의 결제를 취소(환불)할까요? 토스에서 즉시 취소되며 되돌릴 수 없어요.",
+      )
+    )
+      return;
+    setCanceling(true);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderKind: order.kind as OrderKind,
+          orderId: order.id,
+          action: "cancel",
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(j.message || j.error || "결제 취소 실패");
+      toast.success("결제를 취소했어요.");
+      router.refresh(); // 서버에서 주문/결제 상태 재조회
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "결제 취소 실패");
+    } finally {
+      setCanceling(false);
+    }
+  }
 
   async function save() {
     setSaving(true);
@@ -202,6 +237,23 @@ function AdminOrderRow({ order }: { order: AdminOrder }) {
               저장
             </button>
           </div>
+
+          {/* 결제 취소(환불) — 제작 착수 전 결제완료 주문만 */}
+          {cancelable ? (
+            <button
+              type="button"
+              onClick={cancelPay}
+              disabled={canceling}
+              className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-lg border border-destructive/40 px-3 text-[12px] font-medium text-destructive transition active:scale-95 disabled:opacity-40"
+            >
+              {canceling ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Undo2 className="size-3.5" aria-hidden />
+              )}
+              결제 취소(환불)
+            </button>
+          ) : null}
         </div>
       </div>
     </li>
