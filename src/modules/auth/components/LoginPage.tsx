@@ -200,7 +200,21 @@ export function LoginPage({ next, error }: LoginPageProps) {
         )}
 
         <p className="text-center text-xs tracking-normal text-muted-foreground">
-          계속 진행하면 이용약관과 개인정보처리방침에 동의하는 것으로 간주됩니다.
+          계속 진행하면{" "}
+          <a
+            href="/terms"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            이용약관
+          </a>
+          과{" "}
+          <a
+            href="/privacy"
+            className="underline underline-offset-2 hover:text-foreground"
+          >
+            개인정보처리방침
+          </a>
+          에 동의하는 것으로 간주됩니다.
         </p>
       </div>
     </div>

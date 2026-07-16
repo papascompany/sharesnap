@@ -49,6 +49,9 @@ export const updateSession = async (request: NextRequest) => {
     pathname.startsWith("/join");
   const isPublicRoute =
     pathname === "/" ||
+    // 법적 고지(약관·개인정보처리방침) — 비로그인·크롤러 접근 허용(앱스토어·PG 심사가 URL 요구)
+    pathname === "/terms" ||
+    pathname === "/privacy" ||
     pathname.startsWith("/_next") ||
     // API 라우트는 미들웨어 redirect 금지 — 자체적으로 인증/응답을 처리한다.
     // (비로그인은 라우트가 401 JSON 반환, /api/storige/webhook은 서버-서버라 비로그인이 정상.

@@ -4,6 +4,7 @@
 // 반응형: 모바일 우선 + 데스크톱(lg) 2열 히어로 + 와이드 에디토리얼 레이아웃.
 
 import Link from "next/link";
+import { businessInfoRows } from "@/modules/shared/lib/businessInfo";
 import {
   Share2,
   Images,
@@ -713,7 +714,20 @@ export function LandingPage({
             <Link href={isAuthed ? "/rooms" : "/login?next=%2Frooms"}>
               시작하기
             </Link>
+            <Link href="/terms">이용약관</Link>
+            <Link href="/privacy">개인정보처리방침</Link>
           </nav>
+          {/* 사업자 정보(전자상거래법 §10) — businessInfo.ts에서 채워진 항목만 표시 */}
+          {businessInfoRows().length > 0 ? (
+            <dl className="mt-6 space-y-0.5 text-[11.5px] leading-relaxed text-muted-foreground">
+              {businessInfoRows().map(([label, value]) => (
+                <div key={label} className="flex gap-1.5">
+                  <dt className="shrink-0">{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
           <p className="mt-6 text-[12px] text-muted-foreground">
             © ShareSnap. All rights reserved.
           </p>
