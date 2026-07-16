@@ -180,6 +180,11 @@ export function PhotoUploader({
             </SheetDescription>
           </SheetHeader>
 
+          {/* 사진 이용 고지 (감사 P1 — 멤버 간 제작 이용 라이선스 인지) */}
+          <p className="px-4 pb-1 text-[11px] leading-relaxed text-muted-foreground">
+            올린 사진은 이 공유방 멤버가 포토북·인화 제작에 사용할 수 있어요.
+          </p>
+
           {/* 항목별 진행률 목록 */}
           <ul className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
             {queue.map((item) => (

@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { useMyRooms } from "@/modules/room/hooks/useRoom";
 import { usePhotos } from "@/modules/photo/hooks/usePhotos";
+import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { Skeleton } from "@/modules/shared/components/Skeleton";
 import { createPrintOrder } from "@/modules/print-order/services/printOrderService";
 import {
@@ -104,6 +105,7 @@ function PhotoSelector({
 }) {
   const router = useRouter();
   const { photos, isLoading } = usePhotos(roomId);
+  const { user } = useAuth();
   const [qty, setQty] = useState<Record<string, number>>({});
   const [size, setSize] = useState<PrintSize>(DEFAULT_PRINT_SIZE);
   const [paper, setPaper] = useState<PrintPaper>(DEFAULT_PRINT_PAPER);
@@ -114,6 +116,13 @@ function PhotoSelector({
     [qty],
   );
   const totalSheets = selectedIds.reduce((s, id) => s + (qty[id] ?? 0), 0);
+  // 선택분 중 '다른 멤버가 올린' 사진 수 — 인화 전 초상권/저작권 인지 (감사 P1)
+  const othersSelectedCount = useMemo(() => {
+    if (!user) return 0;
+    const selected = new Set(selectedIds);
+    return photos.filter((p) => selected.has(p.id) && p.user_id !== user.id)
+      .length;
+  }, [selectedIds, photos, user]);
   const total = calculatePrintTotal(
     selectedIds.map((id) => ({ size, paper, quantity: qty[id] ?? 0 })),
   );
@@ -275,6 +284,13 @@ function PhotoSelector({
       {/* 하단 고정 주문 바 */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/90 px-4 py-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] backdrop-blur-xl">
         <div className="mx-auto max-w-md">
+          {/* 다른 멤버 사진 포함 고지 (감사 P1) */}
+          {othersSelectedCount > 0 ? (
+            <p className="mb-2 text-[11.5px] leading-snug text-muted-foreground">
+              다른 멤버가 올린 사진 {othersSelectedCount}장이 포함돼 있어요. 인화
+              주문은 함께 찍은 사진을 나눠 갖는 용도로만 이용해 주세요.
+            </p>
+          ) : null}
           <div className="mb-2.5 flex items-center justify-between">
             <span className="text-[13px] text-muted-foreground">
               {totalSheets > 0 ? `${totalSheets}매 선택` : "사진을 선택하세요"}
