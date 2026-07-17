@@ -157,6 +157,16 @@
 - **교훈**: 웹훅(api/payments/webhook)이 이미 CANCELED→payments=canceled+주문 confirmed 롤백을 처리하므로, 토스 대시보드 수동 취소만으로도 DB 정합성 유지(감사 권고 "0줄 대책=runbook"). admin 취소 버튼은 즉시 반영 편의 기능. 주문 status에 명시적 'canceled' 값은 미추가(confirmed 롤백+payments.status로 판별) — 후속 과제.
 - **미완(운영자 외부작업)**: [[sharesnap-autopilot-style]] 참조. 사업자 실값·법무검토, PRICING_CONFIRMED, 토스 키+webhook, 카카오 활성화(ADR-014), 마이그013 적용.
 
+### ADR-016 (2026-07-11): 감사 후속 스프린트3 — 성장 레버 + 운영 안전
+- **배경**: 감사(docs/service-flow-audit.md) 성장 레버(§6 스프린트3) + 이월 운영 안전 P1(방설정·상한·신고)을 코드로 구현(세션#14). 공동주문·profiles+작성자·PWA유도·배송추적은 "카카오 가동 후"가 적기라 스프린트4로 유예.
+- **포토북 선택 반영(거짓 약속 수정)**: `buildExternalPhotosForRoom`(photobookServer.ts)에 `is_selected_for_book` 필터(0장이면 전체 폴백). **핵심: canvasData가 buildAutoLayoutCanvasData(externalPhotos)로 파생**되므로 이 한 곳만 필터하면 편집기 이미지 패널·자동배치 모두 선택분만 반영. `toggleBookSelection`(photoService)에 `.select("id")` 갱신 행 수 검사 → RLS 0행(타인 사진을 일반 멤버가 선택)이면 `SELECT_NOT_ALLOWED` throw → usePhotos에서 롤백+"올린 사람/방장만" 토스트.
+- **악용 방어 상한 3종**: ①방 인원 100 = **join RPC 내부(마이그014 재정의, security definer라 클라 우회 불가)**, ROOM_FULL 에러 매핑 ②방 생성 20 = createRoom count 검사 ③업로드 총량 2000 = PhotoUploader.openPicker에서 getRoomPhotoCount 검사(가용성 우선 — 실패 시 업로드 진행). 상수 constants.ts(ROOM_MAX_MEMBERS/PHOTOS, MAX_ROOMS_PER_USER). `generateShareCode`(utils) Math.random→crypto.getRandomValues(chars 32=2^32 약수라 modulo bias 없음).
+- **방 설정 페이지**: `/rooms/[id]/settings`(RoomSettings 클라) — 초대 링크 재발급(reissueShareCode, 기존 무효화)·멤버 강퇴(kickMember, RLS 006 방장 delete 기존)·나가기(leaveRoom)·삭제. **방 삭제는 service_role 라우트(`DELETE /api/rooms/[id]`)로 교체** — 클라 직접 삭제는 타인 사진 storage 폴더 접근 불가로 고아 발생 → 방장 검증 후 admin이 원본+썸네일 정리 + DB cascade. RoomHeader에 Settings 진입점. ⚠멤버 표시는 profiles 부재라 user_id 앞 6자+역할+가입일만(카카오 가동+profiles 후 개선).
+- **콘텐츠 신고 최소 이행선**: reports 테이블(마이그014, RLS 본인 insert/select, 관리자 service_role) + PhotoViewer 신고 버튼(타인 사진, 사유 4종 시트, reportService.submitReport) + `/admin/reports` 큐(adminReports service_role: listReports/deleteReportedPhoto=storage+DB 삭제/dismissReport) + photo_comments 방장 삭제 정책. **database.ts 수동 타입에 reports Row/Insert/Update 추가 필수**(안 하면 tsc 실패 — 신규 테이블 공통 함정).
+- **성장 레버**: 포토북 상세(/photobooks/[id]) pdf_ready 시 buildFeedTemplate('photobook') 공유 버튼 배선(KAKAO_SHARE_ENABLED 게이트, room.share_code 조회 추가) / 갤러리 사진 PHOTOBOOK_NUDGE_THRESHOLD(20)장+ 넛지 배너.
+- **마이그014(운영 SQL 수동 적용 필요)**: join RPC 인원상한 재정의 + reports 테이블+RLS + photo_comments 방장 삭제. 마이그013과 함께 미적용 상태 → 적용 전까지 신고 insert/방 인원 상한/방장 코멘트 삭제는 미작동(코드는 graceful).
+- **미완(스프린트4, 카카오 가동 후)**: 공동주문("이 방의 포토북" — 스냅스 대응), profiles+작성자 표시, welcome 직후 PWA/외부 브라우저 유도, 배송 추적(tracking 컬럼)+/print/[id] 상세.
+
 ### ADR-010: 디자인 시스템 — "추억을 모아 빛나게"
 - **결정일**: 2026-05-16 (상세: docs/design-system.md — 시각 결정의 단일 소스)
 - **결정**: Primary 선셋 코랄 oklch(0.655 0.19 32) + 앰버 그라데이션, 웜 뉴트럴, 다크모드=시네마 모드(웜 니어블랙, 사진 뷰어는 순수 블랙), Pretendard Variable(dynamic-subset CDN), radius 0.75rem, 모바일 CTA h-12

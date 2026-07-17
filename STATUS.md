@@ -6,12 +6,12 @@
 ## 현재 상태
 
 ```
-CURRENT_PHASE    : 감사 후속 스프린트2(상용화 법적 게이트) 코드 완료·배포(세션 #13). 약관/처리방침·결제 게이트(PRICING_CONFIRMED)·청약철회 고지·사진 라이선스·환불 경로 라이브. 다음: 운영자 외부작업(카카오·SMTP·마이그013·사업자실값·토스키+PRICING_CONFIRMED) → 스프린트3(성장 레버). 정본: docs/service-flow-audit.md
-PROGRESS         : Phase 1~4 + 상업화 스파인 + 주문 UX + 스프린트1(퍼널 가드) + 스프린트2(법적 게이트) / 전체 ~84% + 스프린트3 대기
-LAST_SESSION     : 2026-07-11 (세션 #13, 스프린트2 상용화 법적 게이트 코드 5종 구현·배포)
-LAST_ACTION      : 스프린트2(코드) — ①법적 페이지: businessInfo(placeholder)+/terms(사진 라이선스 §6·청약철회 제한 §9)+/privacy(수집항목·위탁·보유기간)+미들웨어 public+로그인 동의링크+footer 사업자정보 ②결제 게이트: isPricingConfirmed(env PRICING_CONFIRMED) 분리 — getTossClientKey ''폴백+prepareCheckout 503 서버거부 ③CheckoutForm 청약철회 제한 고지+필수 동의 체크박스 ④사진 라이선스 고지: 업로드 시트+인화 주문 멤버사진 N장 ⑤환불: cancelPayment(토스 취소 API)+admin 취소 버튼(paid만)+refund-runbook.md. 4커밋(3330c8a·63945e4·e74ea7a·89abe87). tsc0/lint0/build(30p). 라이브 검증: /terms·/privacy 200(비로그인)+사진 라이선스 조항+로그인 약관 링크.
-BUILD_STATUS     : ✅ 로컬 build(30p) + `vercel --prod` 배포 완료 (2026-07-11 #13, sharesnap-three.vercel.app READY, 최신 89abe87). main 0/0.
-BLOCKED_BY       : ⚠외부 작업(코드 완료, 운영자 실행) — ① **카카오 로그인 활성화**: 콘솔 8단계(audit §2.2) 후 Vercel env `NEXT_PUBLIC_KAKAO_LOGIN_ENABLED=true`+`NEXT_PUBLIC_KAKAO_JS_KEY`+재배포. ② **Supabase D0**: Magic Link 템플릿→`/auth/confirm` 교체 + 커스텀 SMTP. ③ **마이그013 운영 SQL 적용**+고아 썸네일 정리. ④ **결제 개시 3종 게이트**: (a)businessInfo.ts 사업자 실값 입력+법무 검토 (b)정가 확정 후 env `PRICING_CONFIRMED=true` (c)토스 키(`NEXT_PUBLIC_TOSS_CLIENT_KEY`·`TOSS_SECRET_KEY`)+webhook URL 등록 → 셋 다 충족해야 판매 개시. ⑤ 포토북 파이프라인 트랙A. ⑥ Realtime publication.
+CURRENT_PHASE    : 감사 후속 스프린트3(성장 레버 + 운영 안전) 코드 완료·배포(세션 #14). 포토북 선택 반영·상한 3종·방 설정·신고·자랑 배선·넛지 라이브. 감사 지적 P0~P2 코드 항목 대부분 소진. 다음: 운영자 외부작업(카카오·SMTP·마이그013/014·사업자실값·토스키) → 스프린트4(카카오 가동 후 공동주문·profiles·PWA·배송추적). 정본: docs/service-flow-audit.md
+PROGRESS         : Phase 1~4 + 상업화 스파인 + 주문 UX + 스프린트1(퍼널 가드)+2(법적 게이트)+3(성장·운영안전) / 전체 ~88% + 스프린트4(카카오 가동 후) 대기
+LAST_SESSION     : 2026-07-11 (세션 #14, 스프린트3 성장 레버+운영 안전 코드 6종 구현·배포)
+LAST_ACTION      : 스프린트3(코드) — ①포토북 선택 반영: buildExternalPhotosForRoom is_selected_for_book 필터(canvasData 파생)+toggleBookSelection 갱신행 검사 ②상한 3종: join RPC 인원 100(마이그014)+방 생성 20+업로드 총량 2000+generateShareCode crypto ③방 설정 /rooms/[id]/settings(링크 재발급·강퇴·나가기·삭제)+DELETE /api/rooms/[id](service_role storage 정리) ④신고: reports 테이블(마이그014)+PhotoViewer 신고+/admin/reports 큐 ⑤자랑: 포토북 상세 buildFeedTemplate photobook 배선 ⑥갤러리 사진 20장+ 넛지. 5커밋(0ce2bdf·a99e473·0321cef·1694027·57e23ee). tsc0/lint0/build(32p). 라이브 검증: /rooms/abc/settings·/admin/reports next 307.
+BUILD_STATUS     : ✅ 로컬 build(32p) + `vercel --prod` 배포 완료 (2026-07-11 #14, sharesnap-three.vercel.app READY, 최신 57e23ee). main 0/0.
+BLOCKED_BY       : ⚠외부 작업(코드 완료, 운영자 실행) — ① **카카오 로그인 활성화**: 콘솔 8단계(audit §2.2) 후 Vercel env `NEXT_PUBLIC_KAKAO_LOGIN_ENABLED=true`+`NEXT_PUBLIC_KAKAO_JS_KEY`+재배포. ② **Supabase D0**: Magic Link 템플릿→`/auth/confirm` 교체 + 커스텀 SMTP. ③ **마이그013+014 운영 SQL 적용**(썸네일/print DELETE·reports·인원상한·방장 코멘트삭제)+고아 썸네일 정리. ④ **결제 개시 3종 게이트**: (a)businessInfo.ts 사업자 실값+법무 검토 (b)env `PRICING_CONFIRMED=true` (c)토스 키+webhook. ⑤ 포토북 파이프라인 트랙A. ⑥ Realtime publication.
 ```
 
 ## 로컬 테스트 환경 (세션 #3 구축)
@@ -230,6 +230,7 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 | 2026-06-24 | #8 | 랜딩 CMS 마무리 | 어드민 게이트 UX 개선(로그인-비어드민은 404 대신 현재이메일+재로그인 안내+로그아웃, commit 355ade2). ADMIN_EMAILS=yohan73@gmail.com 확정. **운영자 마이그011 SQL 적용 완료 + yohan73 로그인 완료 → 랜딩 CMS 완전 활성화(/admin/landing 편집·저장 동작)**. 비어드민 안내 라이브 캡처 검증 | ✅ | ~25m |
 | 2026-06-24 | #9 | 배포 + 피드백 수정 | 마이그012 운영적용(사용자) 후 `vercel --prod` 배포(sharesnap-three READY). 사용자 피드백 2건 처리: ①"채팅방 올린 사진 삭제 UI 없음" — 원인=채팅 사진 탭이 갤러리 이동만(삭제는 갤러리 뷰어에만 존재). PhotoMessage Link→onOpen + ChatRoom에 usePhotos+PhotoViewer 통합 → 채팅방에서 사진 탭 시 그 자리 뷰어(본인사진 우하단 휴지통 삭제)+삭제 성공 토스트(cac8de7 배포). ②"매직링크 부담"=카카오 1탭이 메인 설계, 카카오 앱키 미설정이 원인(운영 잔여)임을 안내. tsc0/lint0/build. | ✅ | ~30m |
 | 2026-06-24 | #9 | 상업화(B)+랜딩본문(C) 병렬 | **트랙B(메인)**: 토스페이먼츠 결제 풀스택 — payments 테이블(마이그012)+포토북 배송컬럼 / paymentServer(금액 서버산출·confirm Basic인증)+tossWidget/daumPostcode 동적로드+CheckoutForm/ShippingAddressForm+/api/payments/{checkout,confirm,fail,webhook} / 포토북 체크아웃 /photobooks/[id]/checkout+PhotobookList 주문하기 / **인화주문 M7**(print-order 모듈 pricing/service/hooks+사진선택 Creator+/print/new·/print/[id]/checkout)+주문 탭(포토북/인화)+결제결과 토스트 / **관리자 M9** /admin·/admin/orders(service-role 통합조회·상태변경)+AdminDenied 게이트. **트랙C(백그라운드 서브에이전트)**: 랜딩 섹션 본문(불릿·카드·FAQ 9종) LandingContent 승격+어드민 편집 확장+OG 도메인(sharesnap-three) 갱신+사진1슬롯 교체. 금액은 전부 서버 권위 산출(클라 위변조 방지). tsc0/lint0/next build 성공(36 routes). commit f57cc06 push(main 0/0). ⚠운영 마이그012 SQL+토스키+vercel --prod 배포 잔여 | ✅ | ~90m |
+| 2026-07-11 | #14 | 스프린트3 성장+운영안전 | 감사 후속 코드 6종: ①포토북 선택(is_selected_for_book) 편집기·자동배치 반영(거짓약속 수정)+토글 갱신행 검사 ②악용 방어 상한 3종(join RPC 인원100·방생성20·업로드2000)+share_code crypto ③방 설정 페이지(링크 재발급·강퇴·나가기·삭제, DELETE 라우트 storage 정리) ④콘텐츠 신고(reports 테이블+PhotoViewer 신고+/admin/reports 큐+방장 코멘트삭제) ⑤포토북 완성 카톡 자랑 배선 ⑥갤러리 사진 20장+ 넛지. 마이그014(reports·인원상한·방장삭제). tsc0/lint0/build(32p), 5커밋 push, vercel --prod READY, 라이브 검증(settings·reports next 307). 공동주문·profiles·PWA·배송추적은 스프린트4(카카오 가동 후) | ✅ | ~120m |
 | 2026-07-11 | #13 | 스프린트2 법적게이트 | 상용화 결제 라이브 전 필수 코드 5종: ①이용약관(/terms 사진 라이선스·청약철회 제한)·개인정보처리방침(/privacy)+businessInfo(placeholder)+footer/로그인 링크 ②결제 게이트 PRICING_CONFIRMED 분리(토스 키≠판매개시, getTossClientKey ''폴백+서버 503 거부) ③CheckoutForm 청약철회 고지+필수 동의 체크박스 ④사진 라이선스 고지(업로드 시트+인화 멤버사진 N장) ⑤환불 cancelPayment(토스 취소 API)+admin 취소 버튼+refund-runbook.md. tsc0/lint0/build(30p), 4커밋 push, vercel --prod READY, 라이브 검증(/terms·/privacy 200+조항). 사업자 실값·법무검토·PRICING_CONFIRMED·토스키는 운영자 외부작업 | ✅ | ~110m |
 | 2026-07-11 | #12 | 스프린트1 퍼널가드 | 감사 후속 코드 6종: ①로그인 수단 0개 방지(featureFlags 플래그+인앱 매직링크/RoomPreview 폴백) ②로그인 에러 배너+매직링크 60초 쿨다운 ③세션 next 보존(미들웨어+x-pathname 헤더+AuthGuard 마운트) ④카카오 공유 게이트+침묵실패 폴백+초대 카드 커버/통계 ⑤마이그013 삭제 파기 정책+deletePhoto Storage 실패 관측 ⑥@vercel/analytics 퍼널 5종. tsc0/lint0/build(28p), 4커밋 push, vercel --prod READY, 라이브 검증(next 307·매직링크 폴백). 마이그013·카카오 활성화·SMTP는 운영자 외부작업 | ✅ | ~90m |
 | 2026-07-11 | #11 | 플로우 감사 | 비즈니스 로직·서비스 플로우 전면 검증(멀티에이전트: 사실 4트랙+5렌즈 비평+40건 전건 적대검증, API 오류/세션리밋 2회 재개로 완주) → docs/service-flow-audit.md. 결론: 설계방향 유효(스냅스 공동포토북 2026-02 런칭=시장 검증), 치명 결함=인앱 로그인 0개·매직링크 템플릿 미매핑·법적 페이지 부재·삭제 썸네일 잔존. 카카오 활성화 허들 소멸 확인(개인 개발자 당일 자가전환). 로드맵 D0/D1/스프린트1~3 확정. 코드 변경 0 | ✅ | ~80m |
@@ -251,12 +252,12 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 ## 빌드/테스트 상태
 
 ```
-TypeScript   : ✅ tsc --noEmit pass (세션 #13)
-ESLint       : ✅ 0 에러 0 경고 (세션 #13)
-Build        : ✅ 로컬 next build 성공 (2026-07-11 #13, 30 pages) + vercel --prod READY(89abe87)
+TypeScript   : ✅ tsc --noEmit pass (세션 #14, database.ts reports 타입 추가)
+ESLint       : ✅ 0 에러 0 경고 (세션 #14)
+Build        : ✅ 로컬 next build 성공 (2026-07-11 #14, 32 pages) + vercel --prod READY(57e23ee)
 Unit Test    : N/A (Phase 7)
-E2E Test     : ✅ 스프린트2 라이브 검증 — /terms·/privacy 200(비로그인)+사진 라이선스 조항+로그인 약관 링크. 스프린트1 회귀(next 307·매직링크 폴백) 유지. 결제 실 E2E는 PRICING_CONFIRMED+토스키 후
-마지막 검증  : 2026-07-11 로컬 build 30p + prod 라이브 법적 페이지 검증 (세션 #13)
+E2E Test     : ✅ 스프린트3 라이브 검증 — /rooms/[id]/settings·/admin/reports next 307. 스프린트1~2 회귀(next·약관·랜딩) 유지. 신고·방설정·상한 실동작은 마이그014 운영 적용 후. 결제 실 E2E는 PRICING_CONFIRMED+토스키 후
+마지막 검증  : 2026-07-11 로컬 build 32p + prod 라이브 새 라우트 검증 (세션 #14)
 ```
 
 ---
