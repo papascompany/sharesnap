@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { BookHeart, Images } from "lucide-react";
+import { BookHeart, Images, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Room } from "@/modules/room/types";
 
@@ -43,6 +43,14 @@ export function RoomHeader({ room }: RoomHeaderProps) {
           <Button variant="ghost" size="sm">
             초대
           </Button>
+        </Link>
+        {/* 방 설정 — 링크 재발급·강퇴·나가기/삭제 (페이지에서 방장 액션 게이트) */}
+        <Link
+          href={`/rooms/${room.id}/settings`}
+          aria-label="방 설정"
+          className="grid size-11 place-items-center text-foreground transition-transform active:scale-90"
+        >
+          <Settings2 className="size-5" aria-hidden />
         </Link>
       </div>
     </div>
