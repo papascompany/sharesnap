@@ -123,13 +123,20 @@ export function usePhotos(roomId: string | undefined) {
       );
       try {
         await toggleBookSelection(photoId, value);
-      } catch {
+      } catch (err) {
         setPhotos((prev) =>
           prev.map((p) =>
             p.id === photoId ? { ...p, is_selected_for_book: !value } : p,
           ),
         );
-        toast.error("포토북 선택 변경에 실패했습니다.");
+        // 타인 사진을 일반 멤버가 선택 시도 → RLS 0행(SELECT_NOT_ALLOWED)
+        const notAllowed =
+          err instanceof Error && err.message === "SELECT_NOT_ALLOWED";
+        toast.error(
+          notAllowed
+            ? "올린 사람이나 방장만 포토북에 담을 수 있어요."
+            : "포토북 선택 변경에 실패했습니다.",
+        );
       }
     },
     [],

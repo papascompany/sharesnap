@@ -22,6 +22,11 @@ import type { ExternalPhoto } from "@/modules/photo/types";
  *   (uploaderName은 프로필 조인 부재로 생략)
  *
  * public URL을 만들 경로가 없는 사진(print_path/medium_path 모두 null)은 제외한다.
+ *
+ * 포토북 선택(is_selected_for_book)이 하나라도 있으면 선택분만 주입한다 —
+ * 멤버가 뷰어에서 고른 큐레이션이 편집기·자동배치에 실제로 반영된다(감사 P1: 거짓 약속 수정).
+ * 선택이 0장이면 방 전체로 폴백해 빈 포토북을 방지한다.
+ * (canvasData는 이 externalPhotos에서 파생되므로 여기 한 곳만 필터하면 자동배치도 함께 반영)
  */
 export async function buildExternalPhotosForRoom(
   supabase: SupabaseClient<Database>,
@@ -30,11 +35,16 @@ export async function buildExternalPhotosForRoom(
   const { data, error } = await supabase
     .from("photos")
     .select(
-      "print_path, medium_path, thumbnail_path, original_filename, width, height, taken_at, created_at",
+      "print_path, medium_path, thumbnail_path, original_filename, width, height, taken_at, created_at, is_selected_for_book",
     )
     .eq("room_id", roomId)
     .order("created_at", { ascending: true });
   if (error) throw error;
+
+  const rows = data ?? [];
+  // 선택된 사진만 — 0장이면 전체 폴백(빈 포토북 방지)
+  const selected = rows.filter((r) => r.is_selected_for_book);
+  const source = selected.length > 0 ? selected : rows;
 
   // thumbnails 버킷(공개) 경로 → public URL 헬퍼
   const publicUrl = (path: string | null): string | null => {
@@ -44,7 +54,7 @@ export async function buildExternalPhotosForRoom(
   };
 
   const photos: ExternalPhoto[] = [];
-  for (const row of data ?? []) {
+  for (const row of source) {
     // 인쇄용 우선, 과거 사진(print_path 없음)은 medium_path 폴백
     const url = publicUrl(row.print_path) ?? publicUrl(row.medium_path);
     if (!url) continue; // public URL 못 만들면 주입 제외

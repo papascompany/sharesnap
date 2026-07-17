@@ -7,6 +7,17 @@ import {
   STORAGE_BUCKETS,
   MAX_PHOTO_SIZE_MB,
 } from "@/modules/shared/lib/constants";
+
+/** 방의 현재 사진 수 — 업로드 총량 상한 검사용(감사 P1) */
+export async function getRoomPhotoCount(roomId: string): Promise<number> {
+  const supabase = createClient();
+  const { count, error } = await supabase
+    .from("photos")
+    .select("id", { count: "exact", head: true })
+    .eq("room_id", roomId);
+  if (error) throw error;
+  return count ?? 0;
+}
 import { processImage } from "@/modules/photo/services/imageProcessor";
 import type {
   Photo,
@@ -281,11 +292,16 @@ export async function toggleBookSelection(
   value: boolean,
 ): Promise<void> {
   const supabase = createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("photos")
     .update({ is_selected_for_book: value })
-    .eq("id", photoId);
+    .eq("id", photoId)
+    .select("id");
   if (error) throw error;
+  // RLS(본인·방장만 갱신)로 0행이 갱신되면 조용한 실패 — 명시적 에러로 승격(감사 P1)
+  if (!data || data.length === 0) {
+    throw new Error("SELECT_NOT_ALLOWED");
+  }
 }
 
 // ===== 코멘트 =====
