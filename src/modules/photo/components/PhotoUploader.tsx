@@ -27,11 +27,13 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { pickPhotos } from "@/modules/photo/services/photoPickerService";
+import { getRoomPhotoCount } from "@/modules/photo/services/photoService";
 import { usePhotoUpload } from "@/modules/photo/hooks/usePhotoUpload";
 import { buildFeedTemplate, shareKakaoFeed } from "@/modules/shared/lib/kakao";
 // useToast()는 매 렌더마다 새 객체 반환 — photo 모듈 공통 패턴대로 안정적 toast export 사용
 import { toast } from "@/modules/shared/hooks/useToast";
 import { track } from "@/modules/shared/lib/analytics";
+import { ROOM_MAX_PHOTOS } from "@/modules/shared/lib/constants";
 import { cn, formatBytes } from "@/modules/shared/lib/utils";
 import type { PhotoUploadResult, UploadStatus } from "@/modules/photo/types";
 
@@ -93,6 +95,18 @@ export function PhotoUploader({
     try {
       const files = await pickPhotos();
       if (files.length === 0) return; // 사용자 취소
+      // 방 사진 총량 상한 검사(가용성 우선 — count 실패 시 업로드는 진행)
+      try {
+        const current = await getRoomPhotoCount(roomId);
+        if (current + files.length > ROOM_MAX_PHOTOS) {
+          toast.error(
+            `한 방에는 최대 ${ROOM_MAX_PHOTOS}장까지 올릴 수 있어요.`,
+          );
+          return;
+        }
+      } catch {
+        // 상한 검사 실패는 무시하고 업로드 진행
+      }
       setSheetOpen(true);
       enqueue(files);
     } catch (err) {
@@ -100,7 +114,7 @@ export function PhotoUploader({
         err instanceof Error ? err.message : "사진을 선택하지 못했습니다.",
       );
     }
-  }, [enqueue]);
+  }, [enqueue, roomId]);
 
   // 엠티 스테이트 CTA 등 외부 트리거 노출 (React 19 ref-as-prop)
   useImperativeHandle(ref, () => ({ openPicker: () => void openPicker() }), [

@@ -37,9 +37,18 @@ export const realtimeChannel = (roomId: string) => `room:${roomId}`;
 export const MAX_PHOTO_SIZE_MB = 20;
 export const MAX_PHOTOS_PER_UPLOAD = 30;
 
+// 악용 방어 상한 (감사 P1) — 정상 사용자(여행 1회 수백 장)는 체감하지 않는 값으로 시작.
+// 방 인원 상한(ROOM_MAX_MEMBERS)은 join RPC 내부(마이그 014)에서 강제 — 여기 값은 참고/문구용.
+export const ROOM_MAX_MEMBERS = 100;
+export const ROOM_MAX_PHOTOS = 2000; // 방당 누적 사진 총량
+export const MAX_ROOMS_PER_USER = 20; // 사용자당 생성 가능 방 개수
+
 // 포토북 페이지 수 제한
 export const PHOTOBOOK_PAGE_MIN = 8;
 export const PHOTOBOOK_PAGE_MAX = 80;
+
+// 갤러리 포토북 넛지 임계 — 사진이 이만큼 모이면 "포토북 만들기" 배너 노출(감사 P1/P2 전환)
+export const PHOTOBOOK_NUDGE_THRESHOLD = 20;
 
 // 공유방 share_code 길이
 export const SHARE_CODE_LENGTH = 8;

@@ -3,7 +3,10 @@
 
 import { createClient } from "@/modules/shared/lib/supabase/client";
 import { generateShareCode } from "@/modules/shared/lib/utils";
-import { SHARE_CODE_LENGTH } from "@/modules/shared/lib/constants";
+import {
+  SHARE_CODE_LENGTH,
+  MAX_ROOMS_PER_USER,
+} from "@/modules/shared/lib/constants";
 import type {
   CreateRoomInput,
   Room,
@@ -98,6 +101,9 @@ export async function joinRoomViaShareCode(shareCode: string): Promise<string> {
     if (error.message.includes("AUTH_REQUIRED")) {
       throw new Error("로그인이 필요합니다.");
     }
+    if (error.message.includes("ROOM_FULL")) {
+      throw new Error("방 인원이 가득 찼어요. 방장에게 문의해 주세요.");
+    }
     throw error;
   }
   return data;
@@ -110,6 +116,15 @@ export async function createRoom(input: CreateRoomInput): Promise<Room> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("로그인이 필요합니다.");
+
+  // 방 생성 개수 상한(감사 P1 — 무한 생성 방어)
+  const { count: ownedCount } = await supabase
+    .from("rooms")
+    .select("id", { count: "exact", head: true })
+    .eq("owner_id", user.id);
+  if ((ownedCount ?? 0) >= MAX_ROOMS_PER_USER) {
+    throw new Error(`공유방은 최대 ${MAX_ROOMS_PER_USER}개까지 만들 수 있어요.`);
+  }
 
   let lastError: unknown = null;
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -161,10 +176,46 @@ export async function updateRoom(
   return data;
 }
 
-export async function deleteRoom(roomId: string): Promise<void> {
+/** 초대 링크(share_code) 재발급 — 방장만(rooms update RLS). 유출 시 기존 링크 무효화. 충돌 재시도. */
+export async function reissueShareCode(roomId: string): Promise<string> {
   const supabase = createClient();
-  const { error } = await supabase.from("rooms").delete().eq("id", roomId);
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const code = generateShareCode(SHARE_CODE_LENGTH);
+    const { data, error } = await supabase
+      .from("rooms")
+      .update({ share_code: code })
+      .eq("id", roomId)
+      .select("share_code")
+      .single();
+    if (!error && data) return data.share_code;
+    lastError = error;
+    if (error?.code !== "23505") break; // unique 충돌만 재시도
+  }
+  throw lastError ?? new Error("초대 링크 재발급에 실패했어요.");
+}
+
+/** 멤버 강퇴 — 방장만(room_members delete RLS). */
+export async function kickMember(
+  roomId: string,
+  userId: string,
+): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("room_members")
+    .delete()
+    .eq("room_id", roomId)
+    .eq("user_id", userId);
   if (error) throw error;
+}
+
+/** 방 삭제 — Storage(사진 원본+썸네일) 정리 포함(service_role 라우트). 방장만. */
+export async function deleteRoom(roomId: string): Promise<void> {
+  const res = await fetch(`/api/rooms/${roomId}`, { method: "DELETE" });
+  if (!res.ok) {
+    const j = (await res.json().catch(() => ({}))) as { message?: string };
+    throw new Error(j.message ?? "공유방 삭제에 실패했어요.");
+  }
 }
 
 // 공유방 멤버 목록
