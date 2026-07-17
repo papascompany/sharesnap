@@ -15,11 +15,18 @@ import {
   BookHeart,
   ChevronLeft,
   ChevronRight,
+  Flag,
   MessageCircle,
   Trash2,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { PhotoComments } from "@/modules/photo/components/PhotoComments";
+import {
+  submitReport,
+  REPORT_REASON_LABEL,
+  type ReportReason,
+} from "@/modules/report/services/reportService";
 import {
   formatPhotoDateLabel,
   getPhotoDate,
@@ -54,6 +61,7 @@ export function PhotoViewer({
   const { user } = useAuth();
   const [uiVisible, setUiVisible] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   // 스와이프 직후 발생하는 합성 click으로 UI가 토글되는 것 방지
@@ -149,6 +157,16 @@ export function PhotoViewer({
     if (!window.confirm("이 사진을 삭제할까요?")) return;
     setCommentsOpen(false);
     void onDelete(photo.id);
+  };
+
+  const handleReport = async (reason: ReportReason) => {
+    setReportOpen(false);
+    try {
+      await submitReport({ photoId: photo.id, roomId: photo.room_id, reason });
+      toast.success("신고를 접수했어요. 운영자가 검토할게요.");
+    } catch {
+      toast.error("신고 접수에 실패했어요. 잠시 후 다시 시도해 주세요.");
+    }
   };
 
   return (
@@ -291,10 +309,58 @@ export function PhotoViewer({
               >
                 <Trash2 className="size-6" aria-hidden />
               </button>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={() => setReportOpen(true)}
+                aria-label="사진 신고"
+                className="grid size-11 place-items-center text-white transition-transform active:scale-90"
+              >
+                <Flag className="size-6" aria-hidden />
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* 신고 사유 선택 시트 */}
+      {reportOpen ? (
+        <div
+          className="absolute inset-0 z-20 flex items-end bg-black/60"
+          onClick={() => setReportOpen(false)}
+        >
+          <div
+            className="w-full rounded-t-3xl bg-background p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-[15px] font-bold text-foreground">
+              신고 사유를 선택해 주세요
+            </p>
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              접수된 신고는 운영자가 검토 후 조치합니다.
+            </p>
+            <div className="mt-4 space-y-2">
+              {(Object.keys(REPORT_REASON_LABEL) as ReportReason[]).map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => void handleReport(r)}
+                  className="flex h-12 w-full items-center rounded-xl border border-border bg-card px-4 text-left text-[14px] font-medium text-foreground transition active:scale-[0.98]"
+                >
+                  {REPORT_REASON_LABEL[r]}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setReportOpen(false)}
+                className="h-11 w-full text-[13px] font-medium text-muted-foreground"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* 코멘트 바텀시트 — 뷰어 위에 겹쳐서 (design-system.md §5.5) */}
       <PhotoComments

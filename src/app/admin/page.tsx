@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, ChevronRight } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Flag, ChevronRight } from "lucide-react";
 import { createClient } from "@/modules/shared/lib/supabase/server";
 import { isAdminEmail } from "@/modules/admin/services/adminAuth";
 import { AdminDenied } from "@/modules/admin/components/AdminDenied";
@@ -17,6 +17,12 @@ const MENU = [
     icon: ShoppingBag,
     title: "주문 관리",
     desc: "포토북·인화 주문과 결제 현황, 배송 상태 변경",
+  },
+  {
+    href: "/admin/reports",
+    icon: Flag,
+    title: "신고 관리",
+    desc: "신고된 콘텐츠 검토 및 조치",
   },
   {
     href: "/admin/landing",

@@ -86,6 +86,39 @@ export interface Database {
         };
         Relationships: [];
       };
+      reports: {
+        Row: {
+          id: string;
+          reporter_id: string;
+          photo_id: string | null;
+          room_id: string | null;
+          reason: string;
+          detail: string | null;
+          status: "pending" | "resolved" | "dismissed";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          reporter_id: string;
+          photo_id?: string | null;
+          room_id?: string | null;
+          reason: string;
+          detail?: string | null;
+          status?: "pending" | "resolved" | "dismissed";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          reporter_id?: string;
+          photo_id?: string | null;
+          room_id?: string | null;
+          reason?: string;
+          detail?: string | null;
+          status?: "pending" | "resolved" | "dismissed";
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       rooms: {
         Row: {
           id: string;
