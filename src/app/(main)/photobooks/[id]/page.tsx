@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/modules/shared/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
+import { KakaoShareButton } from "@/modules/room/components/KakaoShareButton";
+import { KAKAO_SHARE_ENABLED } from "@/modules/shared/lib/featureFlags";
 import { BOOK_SIZES } from "@/modules/shared/lib/constants";
 import {
   calculatePhotobookPrice,
@@ -102,7 +104,7 @@ export default async function PhotobookDetailPage({
   const [{ data: room }, { data: payments }] = await Promise.all([
     supabase
       .from("rooms")
-      .select("name")
+      .select("name, share_code")
       .eq("id", order.room_id)
       .maybeSingle(),
     supabase
@@ -362,6 +364,15 @@ export default async function PhotobookDetailPage({
               <FileText className="size-4" aria-hidden />
               PDF 보기
             </a>
+          ) : null}
+          {/* 완성 포토북 카톡 자랑 — 유기적 획득 루프(감사 P2). 카카오 공유 가동 시에만 노출 */}
+          {hasPdf && KAKAO_SHARE_ENABLED && room?.share_code ? (
+            <KakaoShareButton
+              variant="photobook"
+              shareCode={room.share_code}
+              roomName={room.name ?? "포토북"}
+              photoCount={order.page_count}
+            />
           ) : null}
         </div>
       </section>

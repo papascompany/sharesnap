@@ -5,7 +5,16 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Images, LayoutGrid, Printer, Rows3 } from "lucide-react";
+import {
+  BookHeart,
+  ChevronLeft,
+  ChevronRight,
+  Images,
+  LayoutGrid,
+  Printer,
+  Rows3,
+} from "lucide-react";
+import { PHOTOBOOK_NUDGE_THRESHOLD } from "@/modules/shared/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
   Tabs,
@@ -116,6 +125,24 @@ export function PhotoGallery({ roomId, roomName, shareCode }: PhotoGalleryProps)
           </div>
         ) : (
           <>
+            {/* 포토북 넛지 — 사진이 충분히 모이면 제작 유도 (감사 전환 레버) */}
+            {photos.length >= PHOTOBOOK_NUDGE_THRESHOLD ? (
+              <Link
+                href={`/rooms/${roomId}/photobook`}
+                className="mx-4 mt-3 flex items-center gap-3 rounded-2xl bg-sunset p-4 text-white shadow-sm transition active:scale-[0.99]"
+              >
+                <BookHeart className="size-7 shrink-0" strokeWidth={1.7} aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[14px] font-bold">
+                    사진 {photos.length}장이 모였어요
+                  </p>
+                  <p className="text-[12px] text-white/85">
+                    이 사진들로 포토북을 만들어 보세요
+                  </p>
+                </div>
+                <ChevronRight className="size-5 shrink-0" aria-hidden />
+              </Link>
+            ) : null}
             <TabsContent value="grid">
               <PhotoGrid
                 photos={photos}
