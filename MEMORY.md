@@ -167,6 +167,16 @@
 - **마이그014(운영 SQL 수동 적용 필요)**: join RPC 인원상한 재정의 + reports 테이블+RLS + photo_comments 방장 삭제. 마이그013과 함께 미적용 상태 → 적용 전까지 신고 insert/방 인원 상한/방장 코멘트 삭제는 미작동(코드는 graceful).
 - **미완(스프린트4, 카카오 가동 후)**: 공동주문("이 방의 포토북" — 스냅스 대응), profiles+작성자 표시, welcome 직후 PWA/외부 브라우저 유도, 배송 추적(tracking 컬럼)+/print/[id] 상세.
 
+### ADR-017 (2026-07-11): 감사 후속 스프린트4 — 정체성(profiles)·공동주문·배송추적·PWA
+- **배경**: 감사(docs/service-flow-audit.md)에서 "카카오 가동 후가 적기"로 유예했던 항목을 코드로 완성(세션#15). **이로써 감사 지적 40건의 코드 항목이 전부 소진**되고, 잔여는 운영자 외부 설정뿐이다.
+- **profiles(작성자 표시)**: 마이그015에 profiles(닉네임·아바타) + `handle_new_user` 트리거(auth.users insert 시 자동 생성, 카카오 `raw_user_meta_data.name/avatar_url` → 없으면 이메일 로컬파트) + 기존 사용자 백필. **RLS select는 본인 + "나와 같은 방에 속한 사용자"만**(room_members 셀프조인) — 무차별 프로필 조회 차단. `useProfiles(userIds)`가 배치 조회 후 Map 반환(정렬된 id 문자열을 effect key로 써서 배열 참조 변화로 인한 무한 재조회 방지), 실패해도 `displayName()` 폴백("나"/"멤버")으로 화면 유지. 적용: 채팅 말풍선(상대만)·PhotoViewer 업로더·코멘트(닉네임+아바타)·방 설정 멤버 목록.
+- **공동주문(스냅스 대응)**: photobook_orders RLS가 본인·방장만 select라 **security definer RPC 2종**으로 한정 제공 — `list_room_photobooks(room_id)`(방 멤버만, 완성 상태만) / `clone_photobook_order(order_id)`(방 멤버 검증 후 **편집 세션은 공유하지 않고 결과물(pdf_path·cover/content_file_id)만 참조하는 새 주문 생성** → 원본 편집 무영향, 각자 결제). UI는 `/rooms/[id]/photobooks` 허브(완성본 목록+만든 사람 닉네임+"나도 주문하기"+만들기 진입) — RoomHeader BookHeart·갤러리 넛지를 허브로 연결(1탭 추가 대신 공동주문 노출 확보).
+- **배송 추적**: 마이그015 tracking_carrier/number + `updateOrderStatus`에 tracking 파라미터(배송 단계에서만 저장) + admin 송장 입력 UI. `tracking.ts`가 택배사 5종(CJ·롯데·한진·로젠·우체국) 조회 URL 템플릿 제공 — **외부 API 연동 없이 링크만으로** 추적 경험. 포토북/인화 주문 상세에 "배송 조회".
+- **/print/[id] 인화 상세**: 포토북 상세(세션#10) 패턴 재사용 — 진행 타임라인·인화 항목 썸네일·결제·배송. 목록 카드 상단 탭으로 진입(포토북과 대칭 확보).
+- **InstallPrompt**: 외부 브라우저는 `beforeinstallprompt` 가로채 커스텀 배너, **카톡 인앱은 `openExternalBrowser`(비공식 스킴이라 1.2초 내 이탈 없으면 URL 복사 폴백)**, standalone 감지 시 미노출, 닫으면 14일 재노출 금지. 방 화면에 마운트(가치 경험 직후).
+- **공통 함정 재확인**: 신규 테이블·컬럼·RPC는 **수동 database.ts에 타입을 추가해야 tsc 통과**(profiles Row/Insert/Update, tracking 6곳, Functions 2종). 부분 컬럼 select에는 `Pick<Row, ...>`로 좁힌 타입을 쓸 것(전체 Row 요구 시 타입 에러).
+- **마이그015 운영 적용 필요**: profiles+트리거+백필+RLS, tracking 컬럼, 공동주문 RPC 2종. 미적용 시 프로필 표시는 폴백, 공동주문 목록은 빈 배열(코드는 graceful).
+
 ### ADR-010: 디자인 시스템 — "추억을 모아 빛나게"
 - **결정일**: 2026-05-16 (상세: docs/design-system.md — 시각 결정의 단일 소스)
 - **결정**: Primary 선셋 코랄 oklch(0.655 0.19 32) + 앰버 그라데이션, 웜 뉴트럴, 다크모드=시네마 모드(웜 니어블랙, 사진 뷰어는 순수 블랙), Pretendard Variable(dynamic-subset CDN), radius 0.75rem, 모바일 CTA h-12
