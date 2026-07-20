@@ -17,6 +17,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/modules/shared/components/Skeleton";
 import { usePhotoComments } from "@/modules/photo/hooks/usePhotoComments";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { useProfiles } from "@/modules/profile/hooks/useProfiles";
+import { displayName } from "@/modules/profile/services/profileService";
 import { cn, formatRelativeTime } from "@/modules/shared/lib/utils";
 
 interface PhotoCommentsProps {
@@ -34,6 +36,8 @@ export function PhotoComments({ photoId, open, onOpenChange }: PhotoCommentsProp
   );
   const [draft, setDraft] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  // 코멘트 작성자 프로필(닉네임/아바타)
+  const profiles = useProfiles(comments.map((c) => c.user_id));
 
   // 새 코멘트 추가/로드 시 맨 아래로 스크롤 (DOM 조작만 — setState 없음)
   useEffect(() => {
@@ -94,8 +98,16 @@ export function PhotoComments({ photoId, open, onOpenChange }: PhotoCommentsProp
                     )}
                   >
                     <Avatar size="sm" className="mt-0.5">
-                      {comment.authorAvatarUrl ? (
-                        <AvatarImage src={comment.authorAvatarUrl} alt="" />
+                      {profiles.get(comment.user_id)?.avatarUrl ??
+                      comment.authorAvatarUrl ? (
+                        <AvatarImage
+                          src={
+                            profiles.get(comment.user_id)?.avatarUrl ??
+                            comment.authorAvatarUrl ??
+                            undefined
+                          }
+                          alt=""
+                        />
                       ) : null}
                       <AvatarFallback>
                         <UserRound className="size-3.5" aria-hidden />
@@ -103,9 +115,9 @@ export function PhotoComments({ photoId, open, onOpenChange }: PhotoCommentsProp
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline gap-1.5">
-                        {/* TODO(photo): 프로필 테이블 조인 후 실제 닉네임 표시 */}
                         <span className="text-[12px] font-semibold">
-                          {comment.authorName ?? (isMine ? "나" : "멤버")}
+                          {comment.authorName ??
+                            displayName(profiles.get(comment.user_id), isMine)}
                         </span>
                         <span className="text-[10px] tabular-nums text-muted-foreground/70">
                           {isPending

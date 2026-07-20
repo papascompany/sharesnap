@@ -32,6 +32,8 @@ import {
   getPhotoDate,
 } from "@/modules/photo/utils/photoDate";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { useProfiles } from "@/modules/profile/hooks/useProfiles";
+import { displayName } from "@/modules/profile/services/profileService";
 import { cn, formatRelativeTime } from "@/modules/shared/lib/utils";
 import type { Photo } from "@/modules/photo/types";
 
@@ -62,6 +64,8 @@ export function PhotoViewer({
   const [uiVisible, setUiVisible] = useState(true);
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  // 업로더 표시 — 현재 사진 기준(뷰어는 한 장씩)
+  const profiles = useProfiles(photos.map((p) => p.user_id));
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   // 스와이프 직후 발생하는 합성 click으로 UI가 토글되는 것 방지
@@ -224,9 +228,10 @@ export function PhotoViewer({
           <p className="truncate text-[13px] font-medium">
             {formatPhotoDateLabel(getPhotoDate(photo))}
           </p>
-          {/* TODO(photo): 프로필 테이블 조인 후 업로더 닉네임 표시 */}
           <p className="text-[11px] text-white/70">
-            {isMine ? "내가 올린 사진" : "멤버가 올린 사진"}
+            {isMine
+              ? "내가 올린 사진"
+              : `${displayName(profiles.get(photo.user_id), false)}님이 올린 사진`}
           </p>
         </div>
         <span className="grid h-11 min-w-11 shrink-0 place-items-center px-1 text-[13px] tabular-nums text-white/80">

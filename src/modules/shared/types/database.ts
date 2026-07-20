@@ -86,6 +86,30 @@ export interface Database {
         };
         Relationships: [];
       };
+      profiles: {
+        Row: {
+          id: string;
+          nickname: string | null;
+          avatar_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          nickname?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          nickname?: string | null;
+          avatar_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       reports: {
         Row: {
           id: string;
@@ -320,6 +344,8 @@ export interface Database {
           shipping_address: Json | null;
           memo: string | null;
           paid_at: string | null;
+          tracking_carrier: string | null;
+          tracking_number: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -355,6 +381,8 @@ export interface Database {
           shipping_address?: Json | null;
           memo?: string | null;
           paid_at?: string | null;
+          tracking_carrier?: string | null;
+          tracking_number?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -390,6 +418,8 @@ export interface Database {
           shipping_address?: Json | null;
           memo?: string | null;
           paid_at?: string | null;
+          tracking_carrier?: string | null;
+          tracking_number?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -440,6 +470,8 @@ export interface Database {
           recipient_phone: string;
           memo: string | null;
           paid_at: string | null;
+          tracking_carrier: string | null;
+          tracking_number: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -460,6 +492,8 @@ export interface Database {
           recipient_phone: string;
           memo?: string | null;
           paid_at?: string | null;
+          tracking_carrier?: string | null;
+          tracking_number?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -480,6 +514,8 @@ export interface Database {
           recipient_phone?: string;
           memo?: string | null;
           paid_at?: string | null;
+          tracking_carrier?: string | null;
+          tracking_number?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -588,6 +624,23 @@ export interface Database {
       // 008_join_funnel.sql — share_code 기반 멱등 참여 (room id 반환)
       join_room_via_share_code: {
         Args: { p_share_code: string };
+        Returns: string;
+      };
+      // 015_profiles_tracking.sql — 방의 완성 포토북 목록(같은 방 멤버만)
+      list_room_photobooks: {
+        Args: { p_room_id: string };
+        Returns: {
+          id: string;
+          user_id: string;
+          book_size: string;
+          page_count: number;
+          status: string;
+          created_at: string;
+        }[];
+      };
+      // 015_profiles_tracking.sql — 완성 포토북 복제 주문("나도 주문하기", 새 order id 반환)
+      clone_photobook_order: {
+        Args: { p_order_id: string };
         Returns: string;
       };
     };

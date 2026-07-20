@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { formatRelativeTime } from "@/modules/shared/lib/utils";
 import { APP_URL } from "@/modules/shared/lib/constants";
 import { useRoomMembers } from "@/modules/room/hooks/useRoomMembers";
+import { useProfiles } from "@/modules/profile/hooks/useProfiles";
+import { displayName } from "@/modules/profile/services/profileService";
 import {
   reissueShareCode,
   kickMember,
@@ -40,6 +42,8 @@ export function RoomSettings({
 }: RoomSettingsProps) {
   const router = useRouter();
   const { members, isLoading, refresh } = useRoomMembers(roomId);
+  // 멤버 닉네임 — 누구를 강퇴하는지 식별 가능하게 (감사: profiles 부재로 user_id만 보이던 문제)
+  const profiles = useProfiles(members.map((m) => m.user_id));
   const [shareCode, setShareCode] = useState(initialShareCode);
   const [reissuing, setReissuing] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -184,8 +188,19 @@ export function RoomSettings({
                     key={m.user_id}
                     className="flex items-center gap-2.5 rounded-xl bg-muted/40 px-3 py-2"
                   >
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
-                      {m.user_id.slice(0, 2).toUpperCase()}
+                    <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                      {profiles.get(m.user_id)?.avatarUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={profiles.get(m.user_id)?.avatarUrl ?? ""}
+                          alt=""
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        displayName(profiles.get(m.user_id), isMe)
+                          .slice(0, 2)
+                          .toUpperCase()
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="flex items-center gap-1 text-[13px] font-medium">
@@ -195,8 +210,14 @@ export function RoomSettings({
                             aria-label="방장"
                           />
                         ) : null}
-                        멤버 {m.user_id.slice(0, 6)}
-                        {isMe ? " (나)" : ""}
+                        <span className="truncate">
+                          {displayName(profiles.get(m.user_id), isMe)}
+                        </span>
+                        {isMe ? (
+                          <span className="shrink-0 text-muted-foreground">
+                            (나)
+                          </span>
+                        ) : null}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
                         {formatRelativeTime(m.joined_at)} 참여

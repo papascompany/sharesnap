@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { useProfiles } from "@/modules/profile/hooks/useProfiles";
+import { displayName } from "@/modules/profile/services/profileService";
 import { cn, formatRelativeTime } from "@/modules/shared/lib/utils";
 import { SystemMessage } from "@/modules/chat/components/SystemMessage";
 import { PhotoMessage } from "@/modules/chat/components/PhotoMessage";
@@ -22,6 +24,8 @@ export function MessageList({
 }: MessageListProps) {
   const { user } = useAuth();
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  // 작성자 표시 — 상대 메시지에만 이름을 노출(내 메시지는 관례상 생략)
+  const profiles = useProfiles(messages.map((m) => m.user_id));
 
   // 새 메시지가 추가되면 자동 스크롤
   useEffect(() => {
@@ -77,6 +81,12 @@ export function MessageList({
               isMine ? "items-end" : "items-start",
             )}
           >
+            {/* 상대 메시지 작성자 이름 — 단톡방 UX의 "누가 말했는지" */}
+            {!isMine ? (
+              <span className="px-1 text-[11px] text-muted-foreground">
+                {displayName(profiles.get(msg.user_id), false)}
+              </span>
+            ) : null}
             {/* 채팅 버블 — 내 메시지는 선셋 그라데이션 + 꼬리쪽 라운드 축소 (design-system.md §4.4) */}
             <div
               className={cn(
