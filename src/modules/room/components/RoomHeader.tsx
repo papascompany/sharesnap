@@ -31,10 +31,10 @@ export function RoomHeader({ room }: RoomHeaderProps) {
         >
           <Images className="size-5" aria-hidden />
         </Link>
-        {/* 포토북 편집 진입 (아이콘 어휘 §6.2: 포토북 = BookHeart, 동일 스타일) */}
+        {/* 포토북 허브 진입 — 이 방의 완성본(공동주문) + 만들기 (아이콘 어휘 §6.2: BookHeart) */}
         <Link
-          href={`/rooms/${room.id}/photobook`}
-          aria-label="포토북 만들기"
+          href={`/rooms/${room.id}/photobooks`}
+          aria-label="포토북"
           className="grid size-11 place-items-center text-foreground transition-transform active:scale-90"
         >
           <BookHeart className="size-5" aria-hidden />

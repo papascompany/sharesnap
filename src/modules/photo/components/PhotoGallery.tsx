@@ -128,7 +128,7 @@ export function PhotoGallery({ roomId, roomName, shareCode }: PhotoGalleryProps)
             {/* 포토북 넛지 — 사진이 충분히 모이면 제작 유도 (감사 전환 레버) */}
             {photos.length >= PHOTOBOOK_NUDGE_THRESHOLD ? (
               <Link
-                href={`/rooms/${roomId}/photobook`}
+                href={`/rooms/${roomId}/photobooks`}
                 className="mx-4 mt-3 flex items-center gap-3 rounded-2xl bg-sunset p-4 text-white shadow-sm transition active:scale-[0.99]"
               >
                 <BookHeart className="size-7 shrink-0" strokeWidth={1.7} aria-hidden />

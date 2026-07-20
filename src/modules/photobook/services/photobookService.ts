@@ -85,6 +85,59 @@ export async function getOrCreateDraftOrder(
   return mapOrder(created);
 }
 
+/** 방의 완성 포토북 1건 — 공동주문("나도 주문하기") 목록 표시용 */
+export interface RoomPhotobook {
+  id: string;
+  userId: string;
+  bookSize: BookSize;
+  pageCount: number;
+  status: string;
+  createdAt: string;
+}
+
+/**
+ * 이 방의 완성 포토북 목록(같은 방 멤버 전체가 조회 가능 — list_room_photobooks RPC).
+ * photobook_orders RLS는 본인·방장만 select 허용이라 RPC로 한정 제공한다.
+ */
+export async function listRoomPhotobooks(
+  roomId: string,
+): Promise<RoomPhotobook[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("list_room_photobooks", {
+    p_room_id: roomId,
+  });
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    bookSize: row.book_size as BookSize,
+    pageCount: row.page_count,
+    status: row.status,
+    createdAt: row.created_at,
+  }));
+}
+
+/**
+ * 완성 포토북 복제 주문 — "나도 주문하기"(clone_photobook_order RPC).
+ * 편집 세션은 공유하지 않고 결과물만 참조하는 새 주문을 만들어 각자 결제한다.
+ */
+export async function clonePhotobookOrder(orderId: string): Promise<string> {
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("clone_photobook_order", {
+    p_order_id: orderId,
+  });
+  if (error) {
+    if (error.message.includes("NOT_ROOM_MEMBER")) {
+      throw new Error("이 방의 멤버만 주문할 수 있어요.");
+    }
+    if (error.message.includes("NOT_COMPLETED")) {
+      throw new Error("아직 제작이 완료되지 않은 포토북이에요.");
+    }
+    throw error;
+  }
+  return data;
+}
+
 /**
  * editor.complete 결과 저장 — storige_session_id·cover_file_id·content_file_id
  * 영속화 + status 'editing'→'confirmed' 전환.
