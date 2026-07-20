@@ -107,7 +107,8 @@ function PrintCard({ order }: { order: PrintOrderListItem }) {
 
   return (
     <Card className="gap-0 rounded-2xl p-4 ring-border/60">
-      <div className="flex items-center gap-3">
+      {/* 상단 정보 행 탭 → 주문 상세(진행 상황·배송 추적·결제 정보) */}
+      <Link href={`/print/${order.id}`} className="flex items-center gap-3">
         <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted ring-1 ring-border/40">
           {order.thumbnailUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -132,7 +133,7 @@ function PrintCard({ order }: { order: PrintOrderListItem }) {
           </p>
         </div>
         <Badge className={`shrink-0 border-0 ${meta.cls}`}>{meta.label}</Badge>
-      </div>
+      </Link>
 
       <div className="mt-3 flex items-end justify-between gap-3">
         <p className="text-[15px] font-semibold tabular-nums">

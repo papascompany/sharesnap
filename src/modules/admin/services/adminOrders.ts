@@ -25,13 +25,13 @@ export async function listAllOrders(): Promise<AdminOrder[]> {
     admin
       .from("photobook_orders")
       .select(
-        "id, order_no, status, total_price, recipient_name, recipient_phone, shipping_address, room_id, created_at, paid_at",
+        "id, order_no, status, total_price, recipient_name, recipient_phone, shipping_address, room_id, created_at, paid_at, tracking_carrier, tracking_number",
       )
       .order("created_at", { ascending: false }),
     admin
       .from("print_orders")
       .select(
-        "id, status, total_price, recipient_name, recipient_phone, shipping_address, created_at, paid_at",
+        "id, status, total_price, recipient_name, recipient_phone, shipping_address, created_at, paid_at, tracking_carrier, tracking_number",
       )
       .order("created_at", { ascending: false }),
     admin
@@ -86,6 +86,8 @@ export async function listAllOrders(): Promise<AdminOrder[]> {
     paymentMethod: payMap.get(`photobook:${o.id}`)?.method ?? null,
     createdAt: o.created_at,
     paidAt: o.paid_at,
+    trackingCarrier: o.tracking_carrier,
+    trackingNumber: o.tracking_number,
   }));
 
   const prOrders: AdminOrder[] = pr.map((o) => ({
@@ -102,6 +104,8 @@ export async function listAllOrders(): Promise<AdminOrder[]> {
     paymentMethod: payMap.get(`print:${o.id}`)?.method ?? null,
     createdAt: o.created_at,
     paidAt: o.paid_at,
+    trackingCarrier: o.tracking_carrier,
+    trackingNumber: o.tracking_number,
   }));
 
   return [...pbOrders, ...prOrders].sort((a, b) =>
@@ -121,25 +125,35 @@ export function summarizeRevenue(orders: AdminOrder[]): {
   };
 }
 
-/** 주문 상태 변경(관리자). 종류별 enum으로 좁혀 갱신. */
+/** 주문 상태 변경(관리자). 종류별 enum으로 좁혀 갱신. 배송 단계면 송장 정보도 함께 저장. */
 export async function updateOrderStatus(
   kind: OrderKind,
   id: string,
   status: string,
+  tracking?: { carrier?: string | null; number?: string | null },
 ): Promise<void> {
   const admin = createServiceRoleClient();
   if (!admin) throw new Error("SERVICE_ROLE_NOT_CONFIGURED");
 
+  // 송장 정보는 전달된 경우에만 갱신(빈 문자열은 null로 정리)
+  const trackingPatch =
+    tracking === undefined
+      ? {}
+      : {
+          tracking_carrier: tracking.carrier?.trim() || null,
+          tracking_number: tracking.number?.trim() || null,
+        };
+
   if (kind === "photobook") {
     const { error } = await admin
       .from("photobook_orders")
-      .update({ status: status as PhotobookStatus })
+      .update({ status: status as PhotobookStatus, ...trackingPatch })
       .eq("id", id);
     if (error) throw error;
   } else {
     const { error } = await admin
       .from("print_orders")
-      .update({ status: status as PrintOrderStatus })
+      .update({ status: status as PrintOrderStatus, ...trackingPatch })
       .eq("id", id);
     if (error) throw error;
   }

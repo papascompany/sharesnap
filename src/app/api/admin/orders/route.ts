@@ -40,6 +40,8 @@ export async function PATCH(request: NextRequest) {
     status?: string;
     action?: string;
     reason?: string;
+    trackingCarrier?: string;
+    trackingNumber?: string;
   };
 
   if (
@@ -79,7 +81,15 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    await updateOrderStatus(body.orderKind, body.orderId, body.status);
+    // 송장 필드가 오면 함께 갱신(배송 추적)
+    const tracking =
+      body.trackingCarrier !== undefined || body.trackingNumber !== undefined
+        ? {
+            carrier: body.trackingCarrier ?? null,
+            number: body.trackingNumber ?? null,
+          }
+        : undefined;
+    await updateOrderStatus(body.orderKind, body.orderId, body.status, tracking);
     return NextResponse.json({ ok: true });
   } catch (e) {
     return NextResponse.json(

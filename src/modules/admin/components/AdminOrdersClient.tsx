@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { BookHeart, Printer, Loader2, Phone, MapPin, Undo2 } from "lucide-react";
 import { formatKRW } from "@/modules/photobook/utils/pricing";
 import { formatRelativeTime } from "@/modules/shared/lib/utils";
+import { CARRIERS, type CarrierKey } from "@/modules/shared/lib/tracking";
 import type { AdminOrder } from "@/modules/admin/types";
 import type { OrderKind } from "@/modules/payment/types";
 
@@ -109,7 +110,14 @@ function AdminOrderRow({ order }: { order: AdminOrder }) {
   const [savedStatus, setSavedStatus] = useState(order.status);
   const [saving, setSaving] = useState(false);
   const [canceling, setCanceling] = useState(false);
-  const dirty = status !== savedStatus;
+  // 배송 추적 — shipped 이후 단계에서 송장 입력(마이그015)
+  const [carrier, setCarrier] = useState(order.trackingCarrier ?? "");
+  const [trackingNo, setTrackingNo] = useState(order.trackingNumber ?? "");
+  const showTracking = status === "shipped" || status === "delivered";
+  const trackingDirty =
+    carrier !== (order.trackingCarrier ?? "") ||
+    trackingNo !== (order.trackingNumber ?? "");
+  const dirty = status !== savedStatus || trackingDirty;
   const options = order.kind === "photobook" ? PHOTOBOOK_STATUSES : PRINT_STATUSES;
   const Icon = order.kind === "photobook" ? BookHeart : Printer;
   // 결제 취소 가능: 결제 완료 + 제작 착수(paid 상태) 전 (약관 §9 청약철회 제한과 정합)
@@ -155,12 +163,17 @@ function AdminOrderRow({ order }: { order: AdminOrder }) {
           orderKind: order.kind as OrderKind,
           orderId: order.id,
           status,
+          // 배송 단계에서만 송장 정보 동반 저장
+          ...(showTracking
+            ? { trackingCarrier: carrier, trackingNumber: trackingNo }
+            : {}),
         }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.message || j.error || "상태 변경 실패");
       toast.success("주문 상태를 변경했어요.");
       setSavedStatus(status); // 저장 성공 — 기준값 갱신(다음 dirty 비교용)
+      if (showTracking) router.refresh(); // 송장 갱신 반영
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "상태 변경 실패");
       setStatus(savedStatus);
@@ -237,6 +250,32 @@ function AdminOrderRow({ order }: { order: AdminOrder }) {
               저장
             </button>
           </div>
+
+          {/* 배송 추적 입력 — 배송 중/완료 단계에서 송장 등록 */}
+          {showTracking ? (
+            <div className="mt-2 flex items-center gap-2">
+              <select
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
+                className="h-9 w-32 shrink-0 rounded-lg border border-border bg-background px-2 text-[13px] outline-none focus:ring-2 focus:ring-ring/40"
+              >
+                <option value="">택배사</option>
+                {(Object.keys(CARRIERS) as CarrierKey[]).map((k) => (
+                  <option key={k} value={k}>
+                    {CARRIERS[k].label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={trackingNo}
+                onChange={(e) => setTrackingNo(e.target.value)}
+                placeholder="송장번호"
+                className="h-9 flex-1 rounded-lg border border-border bg-background px-2.5 text-[13px] tabular-nums outline-none focus:ring-2 focus:ring-ring/40"
+              />
+            </div>
+          ) : null}
 
           {/* 결제 취소(환불) — 제작 착수 전 결제완료 주문만 */}
           {cancelable ? (

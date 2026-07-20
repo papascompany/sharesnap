@@ -19,4 +19,7 @@ export interface AdminOrder {
   paymentMethod: string | null;
   createdAt: string;
   paidAt: string | null;
+  /** 배송 추적 — 관리자가 shipped 전이 시 입력(마이그015) */
+  trackingCarrier: string | null;
+  trackingNumber: string | null;
 }
