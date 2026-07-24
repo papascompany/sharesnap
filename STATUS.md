@@ -11,7 +11,7 @@ PROGRESS         : Phase 1~4 + 상업화 스파인 + 주문 UX + 스프린트1~4
 LAST_SESSION     : 2026-07-11 (세션 #15, 스프린트4 카카오 가동 후 항목 4종 구현·배포)
 LAST_ACTION      : 스프린트4(코드) — ①profiles: 마이그015 테이블+auth 트리거+백필+RLS(같은 방 멤버만)+profileService/useProfiles → 채팅·뷰어·코멘트·방설정에 닉네임/아바타 ②배송추적: tracking 컬럼+admin 송장 입력+tracking.ts 택배사 5종 조회링크+주문 상세 '배송 조회' ③/print/[id] 인화 상세 신설(타임라인·항목·결제·배송) ④공동주문: RPC 2종(list_room_photobooks·clone_photobook_order)+/rooms/[id]/photobooks 허브 '나도 주문하기' ⑤InstallPrompt(외부=beforeinstallprompt, 인앱=openExternalBrowser+URL복사 폴백, 14일 dismiss). 4커밋(48bf1db·78bb65c·1223fbc·3756515). tsc0/lint0/build(32p). 라이브: /rooms/abc/photobooks·/print/abc next 307.
 BUILD_STATUS     : ✅ 로컬 build(32p) + `vercel --prod` 배포 완료 (2026-07-11 #15, sharesnap-three.vercel.app READY, 최신 3756515). main 0/0.
-BLOCKED_BY       : ⚠외부 작업만 남음(코드 완료) — ① **카카오 로그인 활성화**: 콘솔 8단계(audit §2.2) 후 Vercel env `NEXT_PUBLIC_KAKAO_LOGIN_ENABLED=true`+`NEXT_PUBLIC_KAKAO_JS_KEY`+재배포. ② **Supabase D0**: Magic Link 템플릿→`/auth/confirm` 교체 + 커스텀 SMTP. ③ **마이그013+014+015 운영 SQL 적용** → **`docs/production-migration-013-015.sql` 한 파일을 Supabase SQL Editor에 붙여넣고 RUN**(멱등, 마지막 검증쿼리 12항목이 모두 ok여야 정상). 그 후 파일 하단의 고아 썸네일 정리(a 확인→b 실행) 선택 수행. ④ **결제 개시 3종 게이트**: (a)businessInfo.ts 사업자 실값+법무 검토 (b)env `PRICING_CONFIRMED=true` (c)토스 키+webhook. ⑤ 포토북 파이프라인 트랙A. ⑥ Realtime publication.
+BLOCKED_BY       : ⚠외부 작업만 남음(코드 완료) — ① **카카오 로그인 활성화**: 콘솔 8단계(audit §2.2) 후 Vercel env `NEXT_PUBLIC_KAKAO_LOGIN_ENABLED=true`+`NEXT_PUBLIC_KAKAO_JS_KEY`+재배포. ② **Supabase D0**: Magic Link 템플릿→`/auth/confirm` 교체 + 커스텀 SMTP. ③ **마이그013+014+015 운영 SQL 적용 완료(사용자 확인, 검증쿼리 12/12 ok)** — 단 ⚠**PostgREST 스키마 캐시 미갱신 상태**: 앱 REST가 profiles/reports/tracking/RPC를 404/400 응답(브라우저 실측). `NOTIFY pgrst, 'reload schema'`로 리로드 안 됨 → **SQL Editor에서 NOTIFY 재실행 또는 대시보드 Project Restart 필요**. 초록불(200) 전까지 프로필·신고·공동주문·배송추적 앱 미작동. 이후 고아 썸네일 정리(선택). ④ **결제 개시 3종 게이트**: (a)businessInfo.ts 사업자 실값+법무 검토 (b)env `PRICING_CONFIRMED=true` (c)토스 키+webhook. ⑤ 포토북 파이프라인 트랙A. ⑥ Realtime publication.
 ```
 
 ## 로컬 테스트 환경 (세션 #3 구축)
@@ -65,6 +65,11 @@ env(12+)          : SUPABASE URL/anon/service_role, APP_URL, STORIGE API_URL/KEY
 #   A1. (외부·운영자) Storige Admin → ShareSnap: uploadCallbackUrl=https://sharesnap-three.vercel.app/api/storige/webhook
 #       + allowedOrigins/frameAncestors 에 sharesnap-three 추가
 #   A2. prod 편집완료 → /api/storige/compose → webhook 수신 → pdf_ready + pdfs 버킷 PDF 확인
+#   A3. ⭐[Storige 공지 2026-07-24] 편집기 조작 UX 업데이트 — 우리 연동 코드 변경 0(postMessage v1·canvasData 계약 불변).
+#       C5 Alt+드래그 복제=PC 전용(모바일 무관, 이미 LIVE). C6 모바일 롱프레스 컨텍스트 메뉴=배포 예정.
+#       ⚠ShareSnap 전용 요청(§3-2): C6 배포 통지 오면 **모바일 실기에서 핀치줌(D2)↔롱프레스 교차 확인** 1회
+#       (사진 배치 중 롱프레스→메뉴, 핀치 전환 매끄러움/저사양 프레임드랍) + 골든 시나리오(세션→iframe→편집→저장→완료콜백) 1회.
+#       이상 시 세션ID+기기/뷰포트 Storige 회신→플래그 off 롤백. 원문: ../Bookmoa Storige editor/storige/.cursor/plans/NOTICE_embed_partners_e2_c5c6_rollout_2026-07-24.md
 #
 # [상업화 후속 — 코드]
 #   - 인화 주문 상세 페이지(/print/[id]) — 포토북 상세(/photobooks/[id]) 패턴 재사용
